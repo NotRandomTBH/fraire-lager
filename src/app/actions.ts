@@ -13,6 +13,7 @@ import {
   adjustLooseStock,
   packStock,
   receiveStock,
+  recordDefect,
 } from "@/lib/inventory";
 import {
   isShopifyConfigured,
@@ -35,14 +36,43 @@ export async function receiveStockAction(
 ): Promise<ActionState> {
   try {
     const user = await requireUser();
-    await receiveStock({
-      sizeId: String(formData.get("sizeId")),
-      quantity: Number(formData.get("quantity")),
-      note: String(formData.get("note") ?? "") || undefined,
-      createdBy: user.name,
-    });
+    const sizeId = String(formData.get("sizeId"));
+    const quantity = Number(formData.get("quantity") ?? 0);
+    const defectQuantity = Number(formData.get("defectQuantity") ?? 0);
+
+    if (quantity <= 0 && defectQuantity <= 0) {
+      throw new Error("Menge oder Defekt-Menge angeben.");
+    }
+
+    if (quantity > 0) {
+      await receiveStock({
+        sizeId,
+        quantity,
+        note: String(formData.get("note") ?? "") || undefined,
+        createdBy: user.name,
+      });
+    }
+
+    if (defectQuantity > 0) {
+      const photosRaw = String(formData.get("defectPhotos") ?? "[]");
+      let photoDataUrls: string[] = [];
+      try {
+        photoDataUrls = JSON.parse(photosRaw);
+      } catch {
+        photoDataUrls = [];
+      }
+      await recordDefect({
+        sizeId,
+        quantity: defectQuantity,
+        note: String(formData.get("defectNote") ?? "") || undefined,
+        createdBy: user.name,
+        photoDataUrls,
+      });
+    }
+
     revalidatePath("/");
     revalidatePath("/bewegungen");
+    revalidatePath("/defekte");
     return { ok: true, message: "Wareneingang gebucht." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };

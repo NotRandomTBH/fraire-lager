@@ -7,7 +7,11 @@ verpackt werden. Mit Nachbestell-Alerts und optionalem Shopify-Abgleich
 
 ## Was die App macht
 
-- **Wareneingang**: neue lose Einzelteile pro Grösse einbuchen.
+- **Wareneingang**: neue lose Einzelteile pro Grösse einbuchen, plus getrennt
+  die Anzahl defekter Stück mit Notiz und Fotos (fürs Protokoll – zählt nicht
+  zum verkaufbaren Bestand).
+- **Defekte**: Protokoll aller erfassten Defekte mit Fotos, Menge, Notiz,
+  Zeitpunkt und wer's erfasst hat.
 - **Verpacken**: lose Teile zu einer Packung (1er/3er/5er) zusammenstellen –
   reduziert automatisch den losen Bestand und protokolliert die Bewegung.
   Ist die Packung mit Shopify verknüpft, wird deren Shopify-Bestand direkt

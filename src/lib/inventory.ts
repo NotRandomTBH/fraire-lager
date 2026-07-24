@@ -124,6 +124,38 @@ export async function adjustLooseStock(input: {
   ]);
 }
 
+export async function recordDefect(input: {
+  sizeId: string;
+  quantity: number;
+  note?: string;
+  createdBy?: string;
+  photoDataUrls?: string[];
+}) {
+  if (input.quantity <= 0) {
+    throw new Error("Defekt-Menge muss grösser als 0 sein.");
+  }
+
+  await prisma.defectReport.create({
+    data: {
+      sizeId: input.sizeId,
+      quantity: input.quantity,
+      note: input.note,
+      createdBy: input.createdBy,
+      photos: {
+        create: (input.photoDataUrls ?? []).map((dataUrl) => ({ dataUrl })),
+      },
+    },
+  });
+}
+
+export async function listDefectReports(limit = 50) {
+  return prisma.defectReport.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    include: { size: true, photos: true },
+  });
+}
+
 export async function listMovements(limit = 50) {
   return prisma.stockMovement.findMany({
     orderBy: { createdAt: "desc" },

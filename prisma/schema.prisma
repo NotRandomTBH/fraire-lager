@@ -42,6 +42,7 @@ model Size {
 
   movements       StockMovement[]
   shopifyVariants ShopifyVariant[]
+  defectReports   DefectReport[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -99,6 +100,28 @@ model ShopifyConfig {
   locationId        String? // gid://shopify/Location/...
   lastInventorySync DateTime?
   lastSalesSync     DateTime?
+}
+
+// Protokoll defekter Ware bei einer Lieferung (unabhängig vom losen Bestand,
+// nur zur Dokumentation – zählt nicht zum verkaufbaren Lagerbestand).
+model DefectReport {
+  id        String   @id @default(cuid())
+  sizeId    String
+  size      Size     @relation(fields: [sizeId], references: [id])
+  quantity  Int
+  note      String?
+  createdBy String?
+  createdAt DateTime @default(now())
+
+  photos DefectPhoto[]
+}
+
+model DefectPhoto {
+  id             String       @id @default(cuid())
+  defectReportId String
+  defectReport   DefectReport @relation(fields: [defectReportId], references: [id], onDelete: Cascade)
+  dataUrl        String       @db.Text // komprimiertes Foto als Base64 Data-URL
+  createdAt      DateTime     @default(now())
 }
 
 // Aggregierte Verkaufszahlen pro Variante (aus Shopify-Bestellungen), für Bestseller-Auswertung.

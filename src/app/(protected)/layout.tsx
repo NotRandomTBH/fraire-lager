@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/wareneingang", label: "Wareneingang" },
   { href: "/verpacken", label: "Verpacken" },
   { href: "/bewegungen", label: "Bewegungen" },
+  { href: "/defekte", label: "Defekte" },
   { href: "/statistik", label: "Statistik" },
   { href: "/einstellungen", label: "Einstellungen" },
 ];
