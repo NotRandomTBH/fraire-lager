@@ -185,6 +185,29 @@ export async function syncInventoryLevels() {
   });
 }
 
+const AUTO_SYNC_MIN_INTERVAL_MS = 60_000;
+
+// Wird beim Öffnen des Dashboards aufgerufen: aktualisiert den Shopify-Packungsbestand
+// automatisch im Hintergrund, aber höchstens einmal pro Minute (kein Sync bei jedem
+// Reload) und schlägt niemals laut fehl – der Dashboard-Aufruf soll nicht daran scheitern.
+export async function syncInventoryLevelsIfStale() {
+  if (!isShopifyConfigured()) return;
+
+  try {
+    const config = await prisma.shopifyConfig.findUnique({ where: { id: "singleton" } });
+    if (!config?.locationId) return;
+
+    const isStale =
+      !config.lastInventorySync ||
+      Date.now() - config.lastInventorySync.getTime() > AUTO_SYNC_MIN_INTERVAL_MS;
+    if (!isStale) return;
+
+    await syncInventoryLevels();
+  } catch (e) {
+    console.error("Auto-Sync Shopify-Bestand fehlgeschlagen:", e);
+  }
+}
+
 // Holt Bestellungen der letzten `days` Tage und aggregiert verkaufte Menge pro Variante.
 export async function syncSales(days = 30) {
   const since = new Date();

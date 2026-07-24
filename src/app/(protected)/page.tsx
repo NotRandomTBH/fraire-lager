@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { getBestSellers, listSizesWithVariants } from "@/lib/inventory";
-import { isShopifyConfigured } from "@/lib/shopify";
+import { isShopifyConfigured, syncInventoryLevelsIfStale } from "@/lib/shopify";
 import { SyncPanel } from "@/components/SyncPanel";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  await syncInventoryLevelsIfStale();
+
   const [sizes, bestSellers] = await Promise.all([
     listSizesWithVariants(),
     getBestSellers(30),
@@ -44,7 +46,7 @@ export default async function DashboardPage() {
                 <th className="px-4 py-2">Lose Teile</th>
                 <th className="px-4 py-2">Schwelle</th>
                 <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Shopify-Packungen (Cache)</th>
+                <th className="px-4 py-2">Shopify-Packungen</th>
               </tr>
             </thead>
             <tbody>
