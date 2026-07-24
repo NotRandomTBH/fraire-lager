@@ -156,12 +156,101 @@ export async function listDefectReports(limit = 50) {
   return prisma.defectReport.findMany({
     orderBy: { createdAt: "desc" },
     take: limit,
-    include: { size: true, photos: true, reasons: true },
+    include: {
+      size: true,
+      photos: true,
+      reasons: true,
+      notes: { orderBy: { createdAt: "asc" } },
+      edits: { orderBy: { createdAt: "asc" } },
+    },
   });
 }
 
 export async function listDefectReasons() {
   return prisma.defectReason.findMany({ orderBy: { label: "asc" } });
+}
+
+export async function addDefectPhotos(input: {
+  reportId: string;
+  photoDataUrls: string[];
+  createdBy?: string;
+}) {
+  if (input.photoDataUrls.length === 0) return;
+  await prisma.defectPhoto.createMany({
+    data: input.photoDataUrls.map((dataUrl) => ({
+      defectReportId: input.reportId,
+      dataUrl,
+      createdBy: input.createdBy,
+    })),
+  });
+}
+
+export async function addDefectNote(input: {
+  reportId: string;
+  text: string;
+  createdBy?: string;
+}) {
+  const text = input.text.trim();
+  if (!text) throw new Error("Bemerkung darf nicht leer sein.");
+  await prisma.defectNote.create({
+    data: { defectReportId: input.reportId, text, createdBy: input.createdBy },
+  });
+}
+
+// Ändert Menge und/oder Notiz eines bestehenden Defekt-Eintrags. Verlangt eine
+// Begründung und protokolliert jede geänderte Feld für Feld (Audit-Trail),
+// damit nichts unbemerkt überschrieben wird.
+export async function editDefectReport(input: {
+  reportId: string;
+  newQuantity?: number;
+  newNote?: string;
+  reason: string;
+  createdBy?: string;
+}) {
+  const reason = input.reason.trim();
+  if (!reason) throw new Error("Begründung ist erforderlich, um einen Defekt zu bearbeiten.");
+
+  const report = await prisma.defectReport.findUniqueOrThrow({
+    where: { id: input.reportId },
+  });
+
+  const edits: { field: string; oldValue: string; newValue: string }[] = [];
+  const data: { quantity?: number; note?: string } = {};
+
+  if (input.newQuantity !== undefined && input.newQuantity !== report.quantity) {
+    if (input.newQuantity <= 0) throw new Error("Menge muss grösser als 0 sein.");
+    edits.push({
+      field: "quantity",
+      oldValue: String(report.quantity),
+      newValue: String(input.newQuantity),
+    });
+    data.quantity = input.newQuantity;
+  }
+
+  if (input.newNote !== undefined && input.newNote !== (report.note ?? "")) {
+    edits.push({
+      field: "note",
+      oldValue: report.note ?? "",
+      newValue: input.newNote,
+    });
+    data.note = input.newNote;
+  }
+
+  if (edits.length === 0) return;
+
+  await prisma.$transaction([
+    prisma.defectReport.update({ where: { id: input.reportId }, data }),
+    prisma.defectEdit.createMany({
+      data: edits.map((e) => ({
+        defectReportId: input.reportId,
+        field: e.field,
+        oldValue: e.oldValue,
+        newValue: e.newValue,
+        reason,
+        createdBy: input.createdBy,
+      })),
+    }),
+  ]);
 }
 
 export async function createDefectReason(label: string) {

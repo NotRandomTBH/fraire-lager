@@ -115,6 +115,8 @@ model DefectReport {
 
   photos  DefectPhoto[]
   reasons DefectReason[]
+  notes   DefectNote[]
+  edits   DefectEdit[]
 }
 
 model DefectPhoto {
@@ -122,6 +124,32 @@ model DefectPhoto {
   defectReportId String
   defectReport   DefectReport @relation(fields: [defectReportId], references: [id], onDelete: Cascade)
   dataUrl        String       @db.Text // komprimiertes Foto als Base64 Data-URL
+  createdBy      String? // wer das Foto hinzugefügt hat (auch nachträglich)
+  createdAt      DateTime     @default(now())
+}
+
+// Nachträgliche Bemerkung zu einem Defekt-Eintrag – rein additiv, braucht
+// keine Begründung (im Gegensatz zum Ändern bestehender Felder, siehe DefectEdit).
+model DefectNote {
+  id             String       @id @default(cuid())
+  defectReportId String
+  defectReport   DefectReport @relation(fields: [defectReportId], references: [id], onDelete: Cascade)
+  text           String
+  createdBy      String?
+  createdAt      DateTime     @default(now())
+}
+
+// Protokolliert jede nachträgliche Änderung an Menge/Notiz eines
+// Defekt-Eintrags inkl. Pflicht-Begründung (Audit-Trail).
+model DefectEdit {
+  id             String       @id @default(cuid())
+  defectReportId String
+  defectReport   DefectReport @relation(fields: [defectReportId], references: [id], onDelete: Cascade)
+  field          String // "quantity" oder "note"
+  oldValue       String
+  newValue       String
+  reason         String
+  createdBy      String?
   createdAt      DateTime     @default(now())
 }
 

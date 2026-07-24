@@ -10,8 +10,11 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import {
+  addDefectNote,
+  addDefectPhotos,
   adjustLooseStock,
   createDefectReason,
+  editDefectReport,
   packStock,
   receiveStock,
   recordDefect,
@@ -85,6 +88,69 @@ export async function receiveStockAction(
     revalidatePath("/bewegungen");
     revalidatePath("/defekte");
     return { ok: true, message: "Wareneingang gebucht." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function addDefectPhotosAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    const reportId = String(formData.get("reportId"));
+    let photoDataUrls: string[] = [];
+    try {
+      photoDataUrls = JSON.parse(String(formData.get("photos") ?? "[]"));
+    } catch {
+      photoDataUrls = [];
+    }
+    if (photoDataUrls.length === 0) {
+      throw new Error("Kein Foto ausgewählt.");
+    }
+    await addDefectPhotos({ reportId, photoDataUrls, createdBy: user.name });
+    revalidatePath("/defekte");
+    return { ok: true, message: "Foto(s) hinzugefügt." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function addDefectNoteAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    await addDefectNote({
+      reportId: String(formData.get("reportId")),
+      text: String(formData.get("text") ?? ""),
+      createdBy: user.name,
+    });
+    revalidatePath("/defekte");
+    return { ok: true, message: "Bemerkung hinzugefügt." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function editDefectReportAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    const newQuantityRaw = formData.get("newQuantity");
+    await editDefectReport({
+      reportId: String(formData.get("reportId")),
+      newQuantity: newQuantityRaw ? Number(newQuantityRaw) : undefined,
+      newNote: formData.has("newNote") ? String(formData.get("newNote")) : undefined,
+      reason: String(formData.get("reason") ?? ""),
+      createdBy: user.name,
+    });
+    revalidatePath("/defekte");
+    return { ok: true, message: "Änderung gespeichert." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
   }
