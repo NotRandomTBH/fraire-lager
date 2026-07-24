@@ -144,7 +144,7 @@ export async function linkShopifyVariantAction(
   try {
     if (!isShopifyConfigured()) {
       throw new Error(
-        "Shopify ist nicht konfiguriert (SHOPIFY_STORE_DOMAIN / SHOPIFY_ADMIN_ACCESS_TOKEN in .env setzen).",
+        "Shopify ist nicht konfiguriert (SHOPIFY_STORE_DOMAIN / SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET in .env setzen).",
       );
     }
     const sku = String(formData.get("sku") ?? "").trim();
@@ -195,7 +195,7 @@ export async function syncShopifyAction(
   try {
     if (!isShopifyConfigured()) {
       throw new Error(
-        "Shopify ist nicht konfiguriert (SHOPIFY_STORE_DOMAIN / SHOPIFY_ADMIN_ACCESS_TOKEN in .env setzen).",
+        "Shopify ist nicht konfiguriert (SHOPIFY_STORE_DOMAIN / SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET in .env setzen).",
       );
     }
     await syncInventoryLevels();

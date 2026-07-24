@@ -62,22 +62,41 @@ Variante ohne diese Anpassung.
 
 ## Shopify-Anbindung einrichten
 
-1. Im Shopify Admin unter **Einstellungen → Apps und Vertriebskanäle →
-   Apps entwickeln** eine Custom App erstellen.
-2. Admin-API-Berechtigungen `read_products`, `read_inventory`,
-   `write_inventory` und `read_orders` aktivieren.
-3. Admin-API-Access-Token generieren.
-4. In `.env` eintragen:
+Shopify hat 2025 den alten "Custom App im Admin"-Weg abgeschafft. Neue Apps
+laufen über das **Dev Dashboard** (dev.shopify.com) und nutzen den
+**Client Credentials Grant** – die App holt sich damit bei jedem Shopify-Call
+selbst einen frischen 24h-Token, es gibt keinen einzelnen langlebigen Token
+mehr zu kopieren.
+
+1. Auf [dev.shopify.com](https://dev.shopify.com) einloggen, App erstellen
+   (z.B. "Lagerverwaltung").
+2. Bei **API-Zugriff → Bereiche**: `read_products,read_inventory,write_inventory,read_orders`
+   eintragen. Häkchen bei **"Alten Installations-Flow verwenden"** setzen.
+3. Bei **Weiterleitungs-URLs** die Vercel-URL der App eintragen (z.B.
+   `https://fraire-lager.vercel.app`).
+4. Version veröffentlichen.
+5. Die App auf dem Shop installieren – am zuverlässigsten über einen direkten
+   Link statt den "App installieren"-Button auf der Übersichtsseite (der
+   leitet sonst auf die App-URL um, ohne die Installation abzuschliessen):
+   ```
+   https://EUER-SHOP.myshopify.com/admin/oauth/authorize?client_id=CLIENT_ID&scope=read_products,read_inventory,write_inventory,read_orders&redirect_uri=https://EURE-VERCEL-URL
+   ```
+   (`CLIENT_ID` und die beiden URLs entsprechend ersetzen). Dort auf
+   "App installieren" klicken.
+6. Unter **Einstellungen** der Dev-Dashboard-App: **Client-ID** und
+   **Client Secret** kopieren.
+7. In `.env` eintragen:
    ```
    SHOPIFY_STORE_DOMAIN="eure-firma.myshopify.com"
-   SHOPIFY_ADMIN_ACCESS_TOKEN="shpat_..."
+   SHOPIFY_CLIENT_ID="..."
+   SHOPIFY_CLIENT_SECRET="..."
    ```
-5. Server neu starten.
-6. Unter **Einstellungen** in der App: Lagerort auswählen, danach für jede
+8. Server neu starten.
+9. Unter **Einstellungen** in der App: Lagerort auswählen, danach für jede
    der 12 Grösse/Packungsgrösse-Kombinationen die passende Shopify-SKU
    eintragen und verknüpfen.
-7. Auf dem Dashboard "Mit Shopify synchronisieren" klicken, um aktuelle
-   Packungsbestände und Verkaufszahlen (letzte 30 Tage) zu holen.
+10. Auf dem Dashboard "Mit Shopify synchronisieren" klicken, um aktuelle
+    Packungsbestände und Verkaufszahlen (letzte 30 Tage) zu holen.
 
 Ohne Shopify-Konfiguration funktionieren Wareneingang, Verpacken (lokal),
 Bestandskorrektur, Bewegungshistorie und Nachbestell-Alerts bereits normal –
@@ -90,7 +109,7 @@ nur der Shopify-Bestandsabgleich und die Verkaufsstatistik bleiben leer.
 3. Unter **Environment Variables** setzen:
    - `DATABASE_URL` – der Neon-Connection-String (aus neon.tech, Projekt →
      Connection String)
-   - optional `SHOPIFY_STORE_DOMAIN` / `SHOPIFY_ADMIN_ACCESS_TOKEN`
+   - optional `SHOPIFY_STORE_DOMAIN` / `SHOPIFY_CLIENT_ID` / `SHOPIFY_CLIENT_SECRET`
 4. **Deploy** klicken.
 
 Jeder `git push` auf `main` deployt danach automatisch neu.

@@ -138,7 +138,7 @@ export async function getBestSellers(days = 30) {
 
   const snapshots = await prisma.salesSnapshot.groupBy({
     by: ["sizeLabel", "packSize"],
-    where: { periodStart: { gte: since } },
+    where: { periodEnd: { gte: since } },
     _sum: { unitsSold: true },
     orderBy: { _sum: { unitsSold: "desc" } },
   });

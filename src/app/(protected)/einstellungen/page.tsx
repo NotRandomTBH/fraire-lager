@@ -54,10 +54,10 @@ export default async function EinstellungenPage() {
         {!configured ? (
           <p className="rounded-md border border-neutral-200 bg-white p-4 text-sm text-neutral-600">
             In <code className="rounded bg-neutral-100 px-1">.env</code> die Variablen{" "}
-            <code className="rounded bg-neutral-100 px-1">SHOPIFY_STORE_DOMAIN</code> und{" "}
-            <code className="rounded bg-neutral-100 px-1">SHOPIFY_ADMIN_ACCESS_TOKEN</code>{" "}
-            setzen (Custom App im Shopify Admin → Admin API Access Token) und den Server
-            neu starten.
+            <code className="rounded bg-neutral-100 px-1">SHOPIFY_STORE_DOMAIN</code>,{" "}
+            <code className="rounded bg-neutral-100 px-1">SHOPIFY_CLIENT_ID</code> und{" "}
+            <code className="rounded bg-neutral-100 px-1">SHOPIFY_CLIENT_SECRET</code>{" "}
+            setzen (Custom App im Shopify Dev Dashboard) und den Server neu starten.
           </p>
         ) : (
           <>

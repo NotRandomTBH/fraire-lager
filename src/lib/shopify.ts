@@ -4,26 +4,53 @@ const API_VERSION = "2025-01";
 
 function getCredentials() {
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
-  const token = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
-  if (!domain || !token) {
+  const clientId = process.env.SHOPIFY_CLIENT_ID;
+  const clientSecret = process.env.SHOPIFY_CLIENT_SECRET;
+  if (!domain || !clientId || !clientSecret) {
     throw new Error(
-      "SHOPIFY_STORE_DOMAIN und SHOPIFY_ADMIN_ACCESS_TOKEN sind nicht gesetzt (.env prüfen).",
+      "SHOPIFY_STORE_DOMAIN, SHOPIFY_CLIENT_ID und SHOPIFY_CLIENT_SECRET sind nicht gesetzt (.env prüfen).",
     );
   }
-  return { domain, token };
+  return { domain, clientId, clientSecret };
 }
 
 export function isShopifyConfigured() {
   return Boolean(
-    process.env.SHOPIFY_STORE_DOMAIN && process.env.SHOPIFY_ADMIN_ACCESS_TOKEN,
+    process.env.SHOPIFY_STORE_DOMAIN &&
+      process.env.SHOPIFY_CLIENT_ID &&
+      process.env.SHOPIFY_CLIENT_SECRET,
   );
+}
+
+// Holt per Client Credentials Grant einen frischen Admin-API-Token (gültig 24h).
+// Kein statischer Token nötig – die App besorgt sich bei jedem Aufruf selbst einen.
+async function getAccessToken(domain: string, clientId: string, clientSecret: string) {
+  const res = await fetch(`https://${domain}/admin/oauth/access_token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret,
+    }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Shopify Token-Fehler: ${res.status} ${await res.text()}`);
+  }
+
+  const json = (await res.json()) as { access_token: string };
+  return json.access_token;
 }
 
 async function shopifyGraphQL<T>(
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<T> {
-  const { domain, token } = getCredentials();
+  const { domain, clientId, clientSecret } = getCredentials();
+  const token = await getAccessToken(domain, clientId, clientSecret);
+
   const res = await fetch(
     `https://${domain}/admin/api/${API_VERSION}/graphql.json`,
     {
