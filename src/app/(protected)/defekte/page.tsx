@@ -1,5 +1,5 @@
 import { listDefectReports } from "@/lib/inventory";
-import { DefectReportCard } from "@/components/DefectReportCard";
+import { DefectReportsList } from "@/components/DefectReportsList";
 
 export const dynamic = "force-dynamic";
 
@@ -12,19 +12,12 @@ export default async function DefektePage() {
         <h1 className="text-xl font-semibold">Defekte</h1>
         <p className="text-sm text-neutral-600">
           Protokoll defekter Ware aus dem Wareneingang. Zählt nicht zum
-          verkaufbaren Lagerbestand.
+          verkaufbaren Lagerbestand. Einträge auswählen und als PDF (ohne
+          Fotos) exportieren, z.B. für den Produzenten.
         </p>
       </div>
 
-      {reports.length === 0 && (
-        <p className="text-sm text-neutral-400">Noch keine Defekte erfasst.</p>
-      )}
-
-      <div className="space-y-4">
-        {reports.map((r) => (
-          <DefectReportCard key={r.id} report={r} />
-        ))}
-      </div>
+      <DefectReportsList reports={reports} />
     </div>
   );
 }

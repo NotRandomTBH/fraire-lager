@@ -15,10 +15,12 @@ import {
   adjustLooseStock,
   createDefectReason,
   editDefectReport,
+  getDefectReportsForExport,
   packStock,
   receiveStock,
   recordDefect,
 } from "@/lib/inventory";
+import { buildDefectReportsPdf } from "@/lib/pdf";
 import {
   isShopifyConfigured,
   lookupVariantBySku,
@@ -161,6 +163,30 @@ export async function createDefectReasonAction(label: string) {
   const reason = await createDefectReason(label);
   revalidatePath("/wareneingang");
   return reason;
+}
+
+export async function generateDefectPdfAction(reportIds: string[]) {
+  await requireUser();
+  if (reportIds.length === 0) {
+    throw new Error("Keine Defekte ausgewählt.");
+  }
+
+  const reports = await getDefectReportsForExport(reportIds);
+  const bytes = await buildDefectReportsPdf(
+    reports.map((r) => ({
+      sizeLabel: r.size.label,
+      quantity: r.quantity,
+      reasons: r.reasons.map((reason) => reason.label),
+      note: r.note,
+      createdAt: r.createdAt,
+      createdBy: r.createdBy,
+    })),
+  );
+
+  return {
+    base64: Buffer.from(bytes).toString("base64"),
+    filename: `defekte-protokoll-${new Date().toISOString().slice(0, 10)}.pdf`,
+  };
 }
 
 export async function packStockAction(

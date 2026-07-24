@@ -12,7 +12,10 @@ verpackt werden. Mit Nachbestell-Alerts und optionalem Shopify-Abgleich
   zum verkaufbaren Bestand).
 - **Defekte**: Protokoll aller erfassten Defekte mit Fotos, Menge,
   vorbereiteten Defekt-Arten (mehrfach auswählbar, neue Arten direkt beim
-  Erfassen anlegbar), Notiz, Zeitpunkt und wer's erfasst hat.
+  Erfassen anlegbar), Notiz, Zeitpunkt und wer's erfasst hat. Fotos und
+  Bemerkungen lassen sich jederzeit nachträglich hinzufügen; Menge/Notiz
+  bearbeiten verlangt eine Begründung (protokolliert). Mehrere Einträge
+  auswählen und als PDF (ohne Fotos) exportieren, z.B. für den Produzenten.
 - **Verpacken**: lose Teile zu einer Packung (1er/3er/5er) zusammenstellen –
   reduziert automatisch den losen Bestand und protokolliert die Bewegung.
   Ist die Packung mit Shopify verknüpft, wird deren Shopify-Bestand direkt

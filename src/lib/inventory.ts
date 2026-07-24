@@ -166,6 +166,14 @@ export async function listDefectReports(limit = 50) {
   });
 }
 
+export async function getDefectReportsForExport(ids: string[]) {
+  return prisma.defectReport.findMany({
+    where: { id: { in: ids } },
+    orderBy: { createdAt: "asc" },
+    include: { size: true, reasons: true },
+  });
+}
+
 export async function listDefectReasons() {
   return prisma.defectReason.findMany({ orderBy: { label: "asc" } });
 }
