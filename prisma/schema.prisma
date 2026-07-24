@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Ein Mitarbeiter-Account.
+model User {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions Session[]
+}
+
+// Angemeldete Sitzung, referenziert per httpOnly-Cookie.
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// Eine Grösse (S, M, L, XL, ...). Bewusst als Tabelle statt Enum,
+// damit neue Grössen ohne Migration ergänzt werden können.
+model Size {
+  id    String @id @default(cuid())
+  label String @unique // z.B. "S", "M", "L", "XL"
+  order Int    @default(0) // Sortierreihenfolge in der UI
+
+  looseStock       Int @default(0) // aktueller Bestand an losen Einzelteilen
+  reorderThreshold Int @default(20) // Alert, wenn looseStock darunter fällt
+
+  movements       StockMovement[]
+  shopifyVariants ShopifyVariant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum MovementType {
+  RECEIVE // Wareneingang von losen Einzelteilen
+  PACK // lose Einzelteile wurden zu Packungen verpackt (Abgang)
+  ADJUST // manuelle Korrektur (z.B. Inventur)
+}
+
+// Jede Bestandsänderung an losen Einzelteilen wird protokolliert.
+model StockMovement {
+  id     String       @id @default(cuid())
+  sizeId String
+  size   Size         @relation(fields: [sizeId], references: [id])
+  type   MovementType
+
+  // Bei RECEIVE/ADJUST positiv, bei PACK negativ (= Anzahl loser Teile)
+  quantityDelta Int
+
+  // Nur bei PACK gesetzt: wie viele Packungen welcher Packgrösse entstanden sind
+  packSize     Int?
+  packQuantity Int?
+
+  note      String?
+  createdBy String? // Name der Person, die die Aktion ausgeführt hat
+  createdAt DateTime @default(now())
+}
+
+// Verknüpfung Grösse+Packgrösse (1er/3er/5er) zu einer Shopify-Produktvariante.
+model ShopifyVariant {
+  id      String @id @default(cuid())
+  sizeId  String
+  size    Size   @relation(fields: [sizeId], references: [id])
+  packSize Int   // 1, 3 oder 5
+
+  shopifyVariantId    String // gid://shopify/ProductVariant/...
+  shopifyInventoryItemId String? // gid://shopify/InventoryItem/...
+  sku   String?
+  title String? // z.B. "Unterhose M – 3er Pack", zur Anzeige
+
+  packStock Int @default(0) // zuletzt von Shopify bekannter Packungsbestand (Cache)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sizeId, packSize])
+}
+
+// Konfiguration für den Shopify-Abgleich (Location, letzter Sync).
+model ShopifyConfig {
+  id                String    @id @default("singleton")
+  shopDomain        String?
+  locationId        String? // gid://shopify/Location/...
+  lastInventorySync DateTime?
+  lastSalesSync     DateTime?
+}
+
+// Aggregierte Verkaufszahlen pro Variante (aus Shopify-Bestellungen), für Bestseller-Auswertung.
+model SalesSnapshot {
+  id               String   @id @default(cuid())
+  shopifyVariantId String
+  sizeLabel        String
+  packSize         Int
+  unitsSold        Int // verkaufte Packungen im Zeitraum
+  periodStart      DateTime
+  periodEnd        DateTime
+  createdAt        DateTime @default(now())
+}

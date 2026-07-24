@@ -1,0 +1,151 @@
+import { prisma } from "@/lib/prisma";
+import { adjustInventory, isShopifyConfigured } from "@/lib/shopify";
+
+export async function listSizesWithVariants() {
+  return prisma.size.findMany({
+    orderBy: { order: "asc" },
+    include: { shopifyVariants: { orderBy: { packSize: "asc" } } },
+  });
+}
+
+export async function getAlerts() {
+  const sizes = await prisma.size.findMany({ orderBy: { order: "asc" } });
+  return sizes.filter((s) => s.looseStock < s.reorderThreshold);
+}
+
+export async function receiveStock(input: {
+  sizeId: string;
+  quantity: number;
+  note?: string;
+  createdBy?: string;
+}) {
+  if (input.quantity <= 0) {
+    throw new Error("Menge muss grösser als 0 sein.");
+  }
+
+  await prisma.$transaction([
+    prisma.size.update({
+      where: { id: input.sizeId },
+      data: { looseStock: { increment: input.quantity } },
+    }),
+    prisma.stockMovement.create({
+      data: {
+        sizeId: input.sizeId,
+        type: "RECEIVE",
+        quantityDelta: input.quantity,
+        note: input.note,
+        createdBy: input.createdBy,
+      },
+    }),
+  ]);
+}
+
+export async function packStock(input: {
+  sizeId: string;
+  packSize: number;
+  packQuantity: number;
+  createdBy?: string;
+  pushToShopify?: boolean;
+}) {
+  if (input.packQuantity <= 0) {
+    throw new Error("Anzahl Packungen muss grösser als 0 sein.");
+  }
+
+  const size = await prisma.size.findUniqueOrThrow({ where: { id: input.sizeId } });
+  const unitsNeeded = input.packSize * input.packQuantity;
+
+  if (size.looseStock < unitsNeeded) {
+    throw new Error(
+      `Nicht genug lose Teile auf Lager: ${size.looseStock} vorhanden, ${unitsNeeded} benötigt.`,
+    );
+  }
+
+  await prisma.$transaction([
+    prisma.size.update({
+      where: { id: input.sizeId },
+      data: { looseStock: { decrement: unitsNeeded } },
+    }),
+    prisma.stockMovement.create({
+      data: {
+        sizeId: input.sizeId,
+        type: "PACK",
+        quantityDelta: -unitsNeeded,
+        packSize: input.packSize,
+        packQuantity: input.packQuantity,
+        createdBy: input.createdBy,
+      },
+    }),
+  ]);
+
+  if (input.pushToShopify && isShopifyConfigured()) {
+    const variant = await prisma.shopifyVariant.findUnique({
+      where: { sizeId_packSize: { sizeId: input.sizeId, packSize: input.packSize } },
+    });
+    const config = await prisma.shopifyConfig.findUnique({ where: { id: "singleton" } });
+
+    if (variant?.shopifyInventoryItemId && config?.locationId) {
+      await adjustInventory(
+        variant.shopifyInventoryItemId,
+        config.locationId,
+        input.packQuantity,
+      );
+      await prisma.shopifyVariant.update({
+        where: { id: variant.id },
+        data: { packStock: { increment: input.packQuantity } },
+      });
+    }
+  }
+}
+
+export async function adjustLooseStock(input: {
+  sizeId: string;
+  newQuantity: number;
+  note?: string;
+  createdBy?: string;
+}) {
+  const size = await prisma.size.findUniqueOrThrow({ where: { id: input.sizeId } });
+  const delta = input.newQuantity - size.looseStock;
+  if (delta === 0) return;
+
+  await prisma.$transaction([
+    prisma.size.update({
+      where: { id: input.sizeId },
+      data: { looseStock: input.newQuantity },
+    }),
+    prisma.stockMovement.create({
+      data: {
+        sizeId: input.sizeId,
+        type: "ADJUST",
+        quantityDelta: delta,
+        note: input.note,
+        createdBy: input.createdBy,
+      },
+    }),
+  ]);
+}
+
+export async function listMovements(limit = 50) {
+  return prisma.stockMovement.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    include: { size: true },
+  });
+}
+
+export async function getBestSellers(days = 30) {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const snapshots = await prisma.salesSnapshot.groupBy({
+    by: ["sizeLabel", "packSize"],
+    where: { periodStart: { gte: since } },
+    _sum: { unitsSold: true },
+    orderBy: { _sum: { unitsSold: "desc" } },
+  });
+
+  return snapshots.map((s) => ({
+    sizeLabel: s.sizeLabel,
+    packSize: s.packSize,
+    unitsSold: s._sum.unitsSold ?? 0,
+  }));
+}
