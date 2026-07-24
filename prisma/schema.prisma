@@ -113,7 +113,8 @@ model DefectReport {
   createdBy String?
   createdAt DateTime @default(now())
 
-  photos DefectPhoto[]
+  photos  DefectPhoto[]
+  reasons DefectReason[]
 }
 
 model DefectPhoto {
@@ -122,6 +123,16 @@ model DefectPhoto {
   defectReport   DefectReport @relation(fields: [defectReportId], references: [id], onDelete: Cascade)
   dataUrl        String       @db.Text // komprimiertes Foto als Base64 Data-URL
   createdAt      DateTime     @default(now())
+}
+
+// Vorbereitete Defekt-Arten (z.B. "Naht geplatzt"), mehrfach auswählbar pro
+// Defekt-Eintrag. Können jederzeit neu angelegt werden.
+model DefectReason {
+  id        String   @id @default(cuid())
+  label     String   @unique
+  createdAt DateTime @default(now())
+
+  reports DefectReport[]
 }
 
 // Aggregierte Verkaufszahlen pro Variante (aus Shopify-Bestellungen), für Bestseller-Auswertung.

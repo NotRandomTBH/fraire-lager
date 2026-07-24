@@ -32,6 +32,18 @@ export default async function DefektePage() {
                 {r.createdBy && <> · {r.createdBy}</>}
               </div>
             </div>
+            {r.reasons.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {r.reasons.map((reason) => (
+                  <span
+                    key={reason.id}
+                    className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800"
+                  >
+                    {reason.label}
+                  </span>
+                ))}
+              </div>
+            )}
             {r.note && <p className="mt-1 text-sm text-neutral-600">{r.note}</p>}
             {r.photos.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">

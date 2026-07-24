@@ -13,6 +13,15 @@ const SIZES = ["S", "M", "L", "XL"];
 const PACK_SIZES = [1, 3, 5];
 const EMPLOYEES = ["Gianluca", "Maurice", "Maxim"];
 const DEFAULT_PASSWORD = "willkommen2026";
+const DEFECT_REASONS = [
+  "Naht geplatzt",
+  "Loch",
+  "Fleck",
+  "Verfärbung",
+  "Falsche Grösse",
+  "Elastikband defekt",
+  "Fehlerhafter Druck",
+];
 
 async function main() {
   const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
@@ -51,8 +60,16 @@ async function main() {
     create: { id: "singleton" },
   });
 
+  for (const label of DEFECT_REASONS) {
+    await prisma.defectReason.upsert({
+      where: { label },
+      update: {},
+      create: { label },
+    });
+  }
+
   console.log(
-    `Seed abgeschlossen: 4 Grössen, 12 Varianten-Platzhalter, ${EMPLOYEES.length} Accounts (Start-Passwort: "${DEFAULT_PASSWORD}").`,
+    `Seed abgeschlossen: 4 Grössen, 12 Varianten-Platzhalter, ${EMPLOYEES.length} Accounts (Start-Passwort: "${DEFAULT_PASSWORD}"), ${DEFECT_REASONS.length} Defekt-Arten.`,
   );
 }
 

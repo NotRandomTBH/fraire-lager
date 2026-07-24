@@ -130,6 +130,7 @@ export async function recordDefect(input: {
   note?: string;
   createdBy?: string;
   photoDataUrls?: string[];
+  reasonIds?: string[];
 }) {
   if (input.quantity <= 0) {
     throw new Error("Defekt-Menge muss grösser als 0 sein.");
@@ -144,6 +145,9 @@ export async function recordDefect(input: {
       photos: {
         create: (input.photoDataUrls ?? []).map((dataUrl) => ({ dataUrl })),
       },
+      reasons: {
+        connect: (input.reasonIds ?? []).map((id) => ({ id })),
+      },
     },
   });
 }
@@ -152,7 +156,21 @@ export async function listDefectReports(limit = 50) {
   return prisma.defectReport.findMany({
     orderBy: { createdAt: "desc" },
     take: limit,
-    include: { size: true, photos: true },
+    include: { size: true, photos: true, reasons: true },
+  });
+}
+
+export async function listDefectReasons() {
+  return prisma.defectReason.findMany({ orderBy: { label: "asc" } });
+}
+
+export async function createDefectReason(label: string) {
+  const trimmed = label.trim();
+  if (!trimmed) throw new Error("Bezeichnung darf nicht leer sein.");
+  return prisma.defectReason.upsert({
+    where: { label: trimmed },
+    update: {},
+    create: { label: trimmed },
   });
 }
 

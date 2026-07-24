@@ -11,6 +11,7 @@ import {
 } from "@/lib/auth";
 import {
   adjustLooseStock,
+  createDefectReason,
   packStock,
   receiveStock,
   recordDefect,
@@ -61,12 +62,22 @@ export async function receiveStockAction(
       } catch {
         photoDataUrls = [];
       }
+
+      const reasonsRaw = String(formData.get("defectReasonIds") ?? "[]");
+      let reasonIds: string[] = [];
+      try {
+        reasonIds = JSON.parse(reasonsRaw);
+      } catch {
+        reasonIds = [];
+      }
+
       await recordDefect({
         sizeId,
         quantity: defectQuantity,
         note: String(formData.get("defectNote") ?? "") || undefined,
         createdBy: user.name,
         photoDataUrls,
+        reasonIds,
       });
     }
 
@@ -77,6 +88,13 @@ export async function receiveStockAction(
   } catch (e) {
     return { ok: false, message: (e as Error).message };
   }
+}
+
+export async function createDefectReasonAction(label: string) {
+  await requireUser();
+  const reason = await createDefectReason(label);
+  revalidatePath("/wareneingang");
+  return reason;
 }
 
 export async function packStockAction(
