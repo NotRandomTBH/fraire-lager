@@ -241,6 +241,12 @@ export async function syncSales(days = 30) {
   }
 
   const periodEnd = new Date();
+
+  // Jeder Sync berechnet das rollierende 30-Tage-Fenster neu von Grund auf –
+  // alte Snapshots vorher löschen, sonst würden sich die Summen bei jedem
+  // erneuten Sync aufaddieren statt den aktuellen Stand widerzuspiegeln.
+  await prisma.salesSnapshot.deleteMany({});
+
   for (const [shopifyVariantId, unitsSold] of sold.entries()) {
     const variant = variantMap.get(shopifyVariantId)!;
     const size = await prisma.size.findUnique({ where: { id: variant.sizeId } });
