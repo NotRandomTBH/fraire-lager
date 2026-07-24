@@ -19,10 +19,18 @@ verpackt werden. Mit Nachbestell-Alerts und optionalem Shopify-Abgleich
 - **Statistik**: verkaufte Packungen pro Grösse/Packungsgrösse (aus Shopify).
 - **Einstellungen**: Nachbestell-Schwellen pro Grösse, Shopify-Lagerort,
   Verknüpfung jeder Grösse×Packungsgrösse-Kombination mit der passenden
-  Shopify-Variante (per SKU).
+  Shopify-Variante (per SKU), eigenes Passwort ändern.
+- **Login**: jede Buchung wird automatisch der angemeldeten Person zugeordnet.
 
 Daten liegen lokal in einer SQLite-Datei (`dev.db`), es braucht keine
 externe Datenbank.
+
+## Login
+
+Es gibt 3 Accounts: **Gianluca**, **Maurice**, **Maxim**. Start-Passwort für
+alle: `willkommen2026`. Jede Person kann ihr Passwort unter
+**Einstellungen → Eigenes Passwort ändern** selbst ändern (empfohlen, sobald
+alle einmal drin waren).
 
 ## Setup
 
