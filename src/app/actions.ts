@@ -17,6 +17,7 @@ import {
   editDefectReport,
   getDefectReportsForExport,
   packStock,
+  receivePackagingStock,
   receiveStock,
   recordDefect,
 } from "@/lib/inventory";
@@ -204,7 +205,29 @@ export async function packStockAction(
     });
     revalidatePath("/");
     revalidatePath("/bewegungen");
+    revalidatePath("/verpacken");
+    revalidatePath("/wareneingang");
     return { ok: true, message: "Verpackt und Lager aktualisiert." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function receivePackagingStockAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    await receivePackagingStock({
+      packSize: Number(formData.get("packSize")),
+      quantity: Number(formData.get("quantity")),
+      note: String(formData.get("note") ?? "") || undefined,
+      createdBy: user.name,
+    });
+    revalidatePath("/wareneingang");
+    revalidatePath("/verpacken");
+    return { ok: true, message: "Verpackungsmaterial gebucht." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
   }

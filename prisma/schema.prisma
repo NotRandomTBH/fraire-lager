@@ -163,6 +163,32 @@ model DefectReason {
   reports DefectReport[]
 }
 
+// Bestand an Verpackungsmaterial (Beutel/Kartons) pro Packgrösse – unabhängig
+// von der Unterhosen-Grösse, da dasselbe Material für S/M/L/XL verwendet wird.
+model PackagingStock {
+  id       String @id @default(cuid())
+  packSize Int    @unique // 1, 3 oder 5
+  quantity Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PackagingMovementType {
+  RECEIVE // Verpackungsmaterial eingebucht
+  USED // beim Verpacken verbraucht (egal welche Unterhosen-Grösse)
+}
+
+model PackagingMovement {
+  id            String                @id @default(cuid())
+  packSize      Int
+  type          PackagingMovementType
+  quantityDelta Int
+  note          String?
+  createdBy     String?
+  createdAt     DateTime              @default(now())
+}
+
 // Aggregierte Verkaufszahlen pro Variante (aus Shopify-Bestellungen), für Bestseller-Auswertung.
 model SalesSnapshot {
   id               String   @id @default(cuid())

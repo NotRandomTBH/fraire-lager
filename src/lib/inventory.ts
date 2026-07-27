@@ -60,6 +60,15 @@ export async function packStock(input: {
     );
   }
 
+  const packaging = await prisma.packagingStock.findUnique({
+    where: { packSize: input.packSize },
+  });
+  if (!packaging || packaging.quantity < input.packQuantity) {
+    throw new Error(
+      `Nicht genug ${input.packSize}er-Verpackungsmaterial: ${packaging?.quantity ?? 0} vorhanden, ${input.packQuantity} benötigt.`,
+    );
+  }
+
   await prisma.$transaction([
     prisma.size.update({
       where: { id: input.sizeId },
@@ -72,6 +81,19 @@ export async function packStock(input: {
         quantityDelta: -unitsNeeded,
         packSize: input.packSize,
         packQuantity: input.packQuantity,
+        createdBy: input.createdBy,
+      },
+    }),
+    prisma.packagingStock.update({
+      where: { packSize: input.packSize },
+      data: { quantity: { decrement: input.packQuantity } },
+    }),
+    prisma.packagingMovement.create({
+      data: {
+        packSize: input.packSize,
+        type: "USED",
+        quantityDelta: -input.packQuantity,
+        note: `Verpackt: Grösse ${size.label}`,
         createdBy: input.createdBy,
       },
     }),
@@ -276,6 +298,45 @@ export async function listMovements(limit = 50) {
     orderBy: { createdAt: "desc" },
     take: limit,
     include: { size: true },
+  });
+}
+
+export async function listPackagingStock() {
+  return prisma.packagingStock.findMany({ orderBy: { packSize: "asc" } });
+}
+
+export async function receivePackagingStock(input: {
+  packSize: number;
+  quantity: number;
+  note?: string;
+  createdBy?: string;
+}) {
+  if (input.quantity <= 0) {
+    throw new Error("Menge muss grösser als 0 sein.");
+  }
+
+  await prisma.$transaction([
+    prisma.packagingStock.upsert({
+      where: { packSize: input.packSize },
+      update: { quantity: { increment: input.quantity } },
+      create: { packSize: input.packSize, quantity: input.quantity },
+    }),
+    prisma.packagingMovement.create({
+      data: {
+        packSize: input.packSize,
+        type: "RECEIVE",
+        quantityDelta: input.quantity,
+        note: input.note,
+        createdBy: input.createdBy,
+      },
+    }),
+  ]);
+}
+
+export async function listPackagingMovements(limit = 30) {
+  return prisma.packagingMovement.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
   });
 }
 

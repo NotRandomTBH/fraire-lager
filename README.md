@@ -21,7 +21,12 @@ verpackt werden. Mit Nachbestell-Alerts und optionalem Shopify-Abgleich
 - **Verpacken**: lose Teile zu einer Packung (1er/3er/5er) zusammenstellen –
   reduziert automatisch den losen Bestand und protokolliert die Bewegung.
   Ist die Packung mit Shopify verknüpft, wird deren Shopify-Bestand direkt
-  um die verpackte Menge erhöht.
+  um die verpackte Menge erhöht. Verbraucht dabei automatisch das passende
+  Verpackungsmaterial (1er/3er/5er) – unabhängig von der Unterhosen-Grösse,
+  Verpacken wird blockiert, wenn nicht genug davon da ist.
+- **Verpackungsmaterial** (auf der Wareneingang-Seite): eigener Bestand für
+  die 1er/3er/5er-Verpackungen selbst (Beutel/Kartons), grössenunabhängig
+  nachfüllbar.
 - **Dashboard**: aktueller Bestand pro Grösse, Nachbestell-Alert sobald der
   lose Bestand unter die konfigurierte Schwelle fällt, sowie Bestseller der
   letzten 30 Tage.

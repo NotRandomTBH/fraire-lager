@@ -68,6 +68,14 @@ async function main() {
     });
   }
 
+  for (const packSize of PACK_SIZES) {
+    await prisma.packagingStock.upsert({
+      where: { packSize },
+      update: {},
+      create: { packSize, quantity: 0 },
+    });
+  }
+
   console.log(
     `Seed abgeschlossen: 4 Grössen, 12 Varianten-Platzhalter, ${EMPLOYEES.length} Accounts (Start-Passwort: "${DEFAULT_PASSWORD}"), ${DEFECT_REASONS.length} Defekt-Arten.`,
   );

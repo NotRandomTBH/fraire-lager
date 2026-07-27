@@ -15,9 +15,11 @@ type SizeWithVariants = {
 export function VerpackenForm({
   sizes,
   shopifyConfigured,
+  packagingStock,
 }: {
   sizes: SizeWithVariants[];
   shopifyConfigured: boolean;
+  packagingStock: { packSize: number; quantity: number }[];
 }) {
   const [sizeId, setSizeId] = useState(sizes[0]?.id ?? "");
   const [packSize, setPackSize] = useState(3);
@@ -30,6 +32,8 @@ export function VerpackenForm({
     () => Boolean(size?.shopifyVariants.find((v) => v.packSize === packSize)?.shopifyVariantId),
     [size, packSize],
   );
+  const packagingAvailable = packagingStock.find((p) => p.packSize === packSize)?.quantity ?? 0;
+  const packagingRemaining = packagingAvailable - packQuantity;
 
   return (
     <ActionForm action={packStockAction} resetOnSuccess className="space-y-4">
@@ -82,6 +86,13 @@ export function VerpackenForm({
         Benötigt: <strong>{unitsNeeded}</strong> lose Teile · danach noch{" "}
         <strong className={remaining < 0 ? "text-red-600" : ""}>{remaining}</strong> auf
         Lager
+      </p>
+      <p className="text-sm text-neutral-600">
+        Verpackungsmaterial {packSize}er: <strong>{packagingAvailable}</strong> vorhanden ·
+        danach noch{" "}
+        <strong className={packagingRemaining < 0 ? "text-red-600" : ""}>
+          {packagingRemaining}
+        </strong>
       </p>
 
       {shopifyConfigured && (
