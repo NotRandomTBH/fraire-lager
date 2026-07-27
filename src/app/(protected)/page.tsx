@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getBestSellers, listSizesWithVariants } from "@/lib/inventory";
+import { getBestSellers, listPackagingStock, listSizesWithVariants } from "@/lib/inventory";
 import { isShopifyConfigured, syncInventoryLevelsIfStale } from "@/lib/shopify";
 import { SyncPanel } from "@/components/SyncPanel";
 
@@ -8,9 +8,10 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   await syncInventoryLevelsIfStale();
 
-  const [sizes, bestSellers] = await Promise.all([
+  const [sizes, bestSellers, packagingStock] = await Promise.all([
     listSizesWithVariants(),
     getBestSellers(30),
+    listPackagingStock(),
   ]);
 
   const alerts = sizes.filter((s) => s.looseStock < s.reorderThreshold);
@@ -76,6 +77,28 @@ export default async function DashboardPage() {
                   </tr>
                 );
               })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-3 font-medium">Verpackungsmaterial</h2>
+        <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
+          <table className="w-full text-sm">
+            <thead className="bg-neutral-100 text-left text-neutral-600">
+              <tr>
+                <th className="px-4 py-2">Packgrösse</th>
+                <th className="px-4 py-2">Bestand</th>
+              </tr>
+            </thead>
+            <tbody>
+              {packagingStock.map((p) => (
+                <tr key={p.packSize} className="border-t border-neutral-100">
+                  <td className="px-4 py-2 font-medium">{p.packSize}er</td>
+                  <td className="px-4 py-2">{p.quantity}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
