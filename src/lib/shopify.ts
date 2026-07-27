@@ -208,17 +208,23 @@ export async function syncInventoryLevelsIfStale() {
   }
 }
 
-// Holt Bestellungen der letzten `days` Tage und aggregiert verkaufte Menge pro Variante.
-export async function syncSales(days = 30) {
+// Holt Bestellungen der letzten `days` Tage und aggregiert verkaufte Packungen
+// pro Grösse+Packgrösse+Tag (Tagesgranularität, für 7d/30d-Durchschnitte und
+// den Tagesverlauf-Chart). Standard 60 Tage, damit auch der 30-Tage-Schnitt
+// noch etwas Vorlauf hat.
+export async function syncSales(days = 60) {
   const since = new Date();
   since.setDate(since.getDate() - days);
+  since.setUTCHours(0, 0, 0, 0);
 
   const variants = await prisma.shopifyVariant.findMany({
     where: { shopifyVariantId: { not: "" } },
   });
   const variantMap = new Map(variants.map((v) => [v.shopifyVariantId, v]));
 
-  const sold = new Map<string, number>();
+  type DayBucket = { sizeId: string; packSize: number; date: Date; packsSold: number };
+  const byDay = new Map<string, DayBucket>();
+
   let cursor: string | null = null;
   let hasNext = true;
 
@@ -229,6 +235,7 @@ export async function syncSales(days = 30) {
         edges: {
           cursor: string;
           node: {
+            createdAt: string;
             lineItems: {
               nodes: { quantity: number; variant: { id: string } | null }[];
             };
@@ -242,6 +249,7 @@ export async function syncSales(days = 30) {
           edges {
             cursor
             node {
+              createdAt
               lineItems(first: 50) {
                 nodes { quantity variant { id } }
               }
@@ -253,36 +261,48 @@ export async function syncSales(days = 30) {
     );
 
     for (const edge of data.orders.edges) {
+      const day = new Date(edge.node.createdAt);
+      day.setUTCHours(0, 0, 0, 0);
+
       for (const li of edge.node.lineItems.nodes) {
         if (!li.variant) continue;
-        if (!variantMap.has(li.variant.id)) continue;
-        sold.set(li.variant.id, (sold.get(li.variant.id) ?? 0) + li.quantity);
+        const variant = variantMap.get(li.variant.id);
+        if (!variant) continue;
+
+        const key = `${variant.sizeId}|${variant.packSize}|${day.getTime()}`;
+        const existing = byDay.get(key);
+        if (existing) {
+          existing.packsSold += li.quantity;
+        } else {
+          byDay.set(key, {
+            sizeId: variant.sizeId,
+            packSize: variant.packSize,
+            date: day,
+            packsSold: li.quantity,
+          });
+        }
       }
       cursor = edge.cursor;
     }
     hasNext = data.orders.pageInfo.hasNextPage;
   }
 
-  const periodEnd = new Date();
+  // Der abgefragte Zeitraum wird komplett neu berechnet – alte Tage darin
+  // vorher löschen, sonst würden sich die Werte bei jedem erneuten Sync
+  // aufaddieren statt den aktuellen Stand widerzuspiegeln.
+  await prisma.dailySales.deleteMany({ where: { date: { gte: since } } });
 
-  // Jeder Sync berechnet das rollierende 30-Tage-Fenster neu von Grund auf –
-  // alte Snapshots vorher löschen, sonst würden sich die Summen bei jedem
-  // erneuten Sync aufaddieren statt den aktuellen Stand widerzuspiegeln.
-  await prisma.salesSnapshot.deleteMany({});
-
-  for (const [shopifyVariantId, unitsSold] of sold.entries()) {
-    const variant = variantMap.get(shopifyVariantId)!;
-    const size = await prisma.size.findUnique({ where: { id: variant.sizeId } });
-    if (!size) continue;
-    await prisma.salesSnapshot.create({
-      data: {
-        shopifyVariantId,
-        sizeLabel: size.label,
-        packSize: variant.packSize,
-        unitsSold,
-        periodStart: since,
-        periodEnd,
+  for (const bucket of byDay.values()) {
+    await prisma.dailySales.upsert({
+      where: {
+        sizeId_packSize_date: {
+          sizeId: bucket.sizeId,
+          packSize: bucket.packSize,
+          date: bucket.date,
+        },
       },
+      update: { packsSold: bucket.packsSold },
+      create: bucket,
     });
   }
 
@@ -291,5 +311,5 @@ export async function syncSales(days = 30) {
     data: { lastSalesSync: new Date() },
   });
 
-  return sold.size;
+  return byDay.size;
 }

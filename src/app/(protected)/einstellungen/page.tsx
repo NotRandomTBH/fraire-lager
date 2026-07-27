@@ -1,20 +1,23 @@
 import { prisma } from "@/lib/prisma";
+import { getReorderSettings } from "@/lib/reorder";
 import { fetchLocations, isShopifyConfigured } from "@/lib/shopify";
 import { ThresholdForm } from "@/components/ThresholdForm";
 import { VariantLinkForm } from "@/components/VariantLinkForm";
 import { LocationForm } from "@/components/LocationForm";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
+import { ReorderSettingsForm } from "@/components/ReorderSettingsForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function EinstellungenPage() {
   const configured = isShopifyConfigured();
-  const [sizes, config] = await Promise.all([
+  const [sizes, config, reorderSettings] = await Promise.all([
     prisma.size.findMany({
       orderBy: { order: "asc" },
       include: { shopifyVariants: { orderBy: { packSize: "asc" } } },
     }),
     prisma.shopifyConfig.findUnique({ where: { id: "singleton" } }),
+    getReorderSettings(),
   ]);
 
   let locations: { id: string; name: string }[] = [];
@@ -37,10 +40,20 @@ export default async function EinstellungenPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-medium">Nachbestell-Schwellen</h2>
+        <h2 className="font-medium">Automatische Nachbestell-Prognose</h2>
         <p className="text-sm text-neutral-600">
-          Alert erscheint auf dem Dashboard, sobald der lose Bestand einer Grösse
-          unter diesen Wert fällt.
+          Parameter für die live berechnete Ampel/Reichweite auf Dashboard und
+          Analytics-Seite. Bestellpunkt = Ø-Tagesverkauf × (Lieferzeit + Puffer).
+        </p>
+        <ReorderSettingsForm settings={reorderSettings} />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-medium">Nachbestell-Schwellen (manueller Override)</h2>
+        <p className="text-sm text-neutral-600">
+          Zusätzlich zur automatischen Prognose oben: Alert erscheint auf dem
+          Dashboard, sobald der lose Bestand einer Grösse unter diesen manuell
+          gesetzten Wert fällt.
         </p>
         <div className="space-y-2">
           {sizes.map((s) => (

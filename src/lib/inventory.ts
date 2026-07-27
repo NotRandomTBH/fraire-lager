@@ -344,16 +344,20 @@ export async function getBestSellers(days = 30) {
   const since = new Date();
   since.setDate(since.getDate() - days);
 
-  const snapshots = await prisma.salesSnapshot.groupBy({
-    by: ["sizeLabel", "packSize"],
-    where: { periodEnd: { gte: since } },
-    _sum: { unitsSold: true },
-    orderBy: { _sum: { unitsSold: "desc" } },
-  });
+  const [grouped, sizes] = await Promise.all([
+    prisma.dailySales.groupBy({
+      by: ["sizeId", "packSize"],
+      where: { date: { gte: since } },
+      _sum: { packsSold: true },
+      orderBy: { _sum: { packsSold: "desc" } },
+    }),
+    prisma.size.findMany(),
+  ]);
+  const sizeLabelById = new Map(sizes.map((s) => [s.id, s.label]));
 
-  return snapshots.map((s) => ({
-    sizeLabel: s.sizeLabel,
-    packSize: s.packSize,
-    unitsSold: s._sum.unitsSold ?? 0,
+  return grouped.map((g) => ({
+    sizeLabel: sizeLabelById.get(g.sizeId) ?? "?",
+    packSize: g.packSize,
+    unitsSold: g._sum.packsSold ?? 0,
   }));
 }

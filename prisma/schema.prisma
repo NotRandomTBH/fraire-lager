@@ -38,11 +38,12 @@ model Size {
   order Int    @default(0) // Sortierreihenfolge in der UI
 
   looseStock       Int @default(0) // aktueller Bestand an losen Einzelteilen
-  reorderThreshold Int @default(20) // Alert, wenn looseStock darunter fällt
+  reorderThreshold Int @default(20) // manueller Mindestbestand – bleibt als optionaler Override neben der automatischen Berechnung bestehen
 
   movements       StockMovement[]
   shopifyVariants ShopifyVariant[]
   defectReports   DefectReport[]
+  dailySales      DailySales[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -189,14 +190,27 @@ model PackagingMovement {
   createdAt     DateTime              @default(now())
 }
 
-// Aggregierte Verkaufszahlen pro Variante (aus Shopify-Bestellungen), für Bestseller-Auswertung.
-model SalesSnapshot {
-  id               String   @id @default(cuid())
-  shopifyVariantId String
-  sizeLabel        String
-  packSize         Int
-  unitsSold        Int // verkaufte Packungen im Zeitraum
-  periodStart      DateTime
-  periodEnd        DateTime
-  createdAt        DateTime @default(now())
+// Verkaufte Packungen pro Grösse+Packgrösse+Tag (aus Shopify-Bestellungen).
+// Tagesgranularität statt eines groben Zeitraum-Aggregats, damit sich sowohl
+// 7-Tage- als auch 30-Tage-Durchschnitte berechnen und ein Tagesverlauf-Chart
+// zeichnen lassen. Wird bei jedem Sync für den abgefragten Zeitraum komplett
+// neu berechnet (kein Aufsummieren über mehrere Syncs hinweg).
+model DailySales {
+  id        String   @id @default(cuid())
+  sizeId    String
+  size      Size     @relation(fields: [sizeId], references: [id])
+  packSize  Int
+  date      DateTime // auf Tagesbeginn (UTC) normalisiert
+  packsSold Int
+  createdAt DateTime @default(now())
+
+  @@unique([sizeId, packSize, date])
+}
+
+// Globale Parameter für die automatische Bestellpunkt-Berechnung.
+model ReorderSettings {
+  id                 String @id @default("singleton")
+  leadTimeDays       Int    @default(80) // offizielle Lieferzeit + Puffer für Verzögerungen
+  safetyBufferDays   Int    @default(14)
+  warningWindowDays  Int    @default(30) // ab wann die Ampel auf Gelb springt
 }

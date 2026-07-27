@@ -22,6 +22,7 @@ import {
   recordDefect,
 } from "@/lib/inventory";
 import { buildDefectReportsPdf } from "@/lib/pdf";
+import { updateReorderSettings } from "@/lib/reorder";
 import {
   isShopifyConfigured,
   lookupVariantBySku,
@@ -233,6 +234,30 @@ export async function receivePackagingStockAction(
   }
 }
 
+export async function updateReorderSettingsAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    await requireUser();
+    const leadTimeDays = Number(formData.get("leadTimeDays"));
+    const safetyBufferDays = Number(formData.get("safetyBufferDays"));
+    const warningWindowDays = Number(formData.get("warningWindowDays"));
+
+    if ([leadTimeDays, safetyBufferDays, warningWindowDays].some((n) => !Number.isFinite(n) || n < 0)) {
+      throw new Error("Alle Werte müssen gültige, nicht-negative Zahlen sein.");
+    }
+
+    await updateReorderSettings({ leadTimeDays, safetyBufferDays, warningWindowDays });
+    revalidatePath("/");
+    revalidatePath("/analytics");
+    revalidatePath("/einstellungen");
+    return { ok: true, message: "Bestellpunkt-Parameter gespeichert." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
 export async function adjustStockAction(
   _prev: ActionState,
   formData: FormData,
@@ -362,11 +387,12 @@ export async function syncShopifyAction(
       );
     }
     await syncInventoryLevels();
-    const count = await syncSales(30);
+    const count = await syncSales();
     revalidatePath("/");
     revalidatePath("/einstellungen");
     revalidatePath("/statistik");
-    return { ok: true, message: `Sync abgeschlossen (${count} Varianten mit Verkäufen).` };
+    revalidatePath("/analytics");
+    return { ok: true, message: `Sync abgeschlossen (${count} Tages-Einträge aktualisiert).` };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
   }

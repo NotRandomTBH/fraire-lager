@@ -27,14 +27,22 @@ verpackt werden. Mit Nachbestell-Alerts und optionalem Shopify-Abgleich
 - **Verpackungsmaterial** (auf der Wareneingang-Seite): eigener Bestand für
   die 1er/3er/5er-Verpackungen selbst (Beutel/Kartons), grössenunabhängig
   nachfüllbar.
-- **Dashboard**: aktueller Bestand pro Grösse, Nachbestell-Alert sobald der
-  lose Bestand unter die konfigurierte Schwelle fällt, sowie Bestseller der
-  letzten 30 Tage.
+- **Dashboard**: aktueller Bestand pro Grösse, automatische Nachbestell-Ampel
+  (Rot/Gelb/Grün/Grau) + Reichweite in Tagen pro Grösse und fürs
+  Verpackungsmaterial, Gesamtstatus oben (schlechteste Grösse, da in einer
+  MOQ-Charge zusammen bestellt wird), plus Bestseller der letzten 30 Tage.
+- **Analytics**: pro Grösse ein Tagesverkaufs-Chart (45 Tage), Bestand-
+  Aufschlüsselung (lose/verpackt), Bestellpunkt, Tage bis Bestellung nötig,
+  vorgeschlagenes Bestelldatum und ein live berechneter Begründungstext.
+  Warnt explizit bei "geringer Datenbasis" (< 14 Tage Verkaufshistorie).
+  Verpackungsmaterial ebenfalls mit eigener Ampel (niedrigere Priorität).
 - **Bewegungen**: vollständige Historie aller Buchungen.
 - **Statistik**: verkaufte Packungen pro Grösse/Packungsgrösse (aus Shopify).
-- **Einstellungen**: Nachbestell-Schwellen pro Grösse, Shopify-Lagerort,
-  Verknüpfung jeder Grösse×Packungsgrösse-Kombination mit der passenden
-  Shopify-Variante (per SKU), eigenes Passwort ändern.
+- **Einstellungen**: Parameter der automatischen Nachbestell-Prognose
+  (Lieferzeit/Puffer/Warnfenster, Standard 80/14/30 Tage), Nachbestell-
+  Schwellen pro Grösse als manueller Override, Shopify-Lagerort, Verknüpfung
+  jeder Grösse×Packungsgrösse-Kombination mit der passenden Shopify-Variante
+  (per SKU), eigenes Passwort ändern.
 - **Login**: jede Buchung wird automatisch der angemeldeten Person zugeordnet.
 
 Die App läuft auf **Vercel** (immer erreichbar unter einer festen URL) und
@@ -134,7 +142,17 @@ Jeder `git push` auf `main` deployt danach automatisch neu.
 - Next.js (App Router) + TypeScript + Tailwind CSS
 - Postgres (Neon, serverless) via Prisma (`prisma/schema.prisma`)
 - Server Actions für alle Buchungen (`src/app/actions.ts`)
-- Shopify Admin GraphQL API (`src/lib/shopify.ts`)
+- Shopify Admin GraphQL API (`src/lib/shopify.ts`) – `syncSales()` schreibt
+  Tagesverkäufe pro Grösse+Packgrösse (`DailySales`), Grundlage für Bestseller
+  UND die Nachbestell-Prognose
+- Nachbestell-Formel als reine, testbare Funktion in `src/lib/reorder-calc.ts`
+  (`calculateReorderStatus`), DB-Anbindung in `src/lib/reorder.ts`
+
+### Tests
+
+```bash
+npm test   # Vitest – Formel-Tests für die Bestellpunkt-Berechnung
+```
 
 ### Datenbank-Befehle
 
