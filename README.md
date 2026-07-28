@@ -42,7 +42,9 @@ verpackt werden. Mit Nachbestell-Alerts und optionalem Shopify-Abgleich
   (Lieferzeit/Puffer/Warnfenster, Standard 80/14/30 Tage), Nachbestell-
   Schwellen pro Grösse als manueller Override, Shopify-Lagerort, Verknüpfung
   jeder Grösse×Packungsgrösse-Kombination mit der passenden Shopify-Variante
-  (per SKU), eigenes Passwort ändern.
+  (per SKU) inkl. direkter Bestandskorrektur (z.B. nach einer Inventur – ohne
+  Umweg über das Shopify-Admin, die App holt vorher den echten Live-Wert und
+  passt nur die Differenz an), eigenes Passwort ändern.
 - **Login**: jede Buchung wird automatisch der angemeldeten Person zugeordnet.
 
 Die App läuft auf **Vercel** (immer erreichbar unter einer festen URL) und

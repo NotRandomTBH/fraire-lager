@@ -6,6 +6,7 @@ import { VariantLinkForm } from "@/components/VariantLinkForm";
 import { LocationForm } from "@/components/LocationForm";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { ReorderSettingsForm } from "@/components/ReorderSettingsForm";
+import { CorrectShopifyStockForm } from "@/components/CorrectShopifyStockForm";
 
 export const dynamic = "force-dynamic";
 
@@ -83,10 +84,13 @@ export default async function EinstellungenPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-medium">Shopify-Varianten verknüpfen</h2>
+        <h2 className="font-medium">Shopify-Varianten verknüpfen &amp; Bestand korrigieren</h2>
         <p className="text-sm text-neutral-600">
           Jede Kombination aus Grösse und Packungsgrösse mit der passenden Shopify-SKU
-          verknüpfen, damit Verpacken & Sync funktionieren.
+          verknüpfen, damit Verpacken & Sync funktionieren. Bei verknüpften Varianten kann
+          der Shopify-Bestand hier auch direkt korrigiert werden (z.B. nach einer
+          Inventur), statt dafür ins Shopify-Admin zu wechseln – die App holt vorher den
+          echten Live-Wert und passt nur die Differenz an.
         </p>
         <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
           <table className="w-full text-sm">
@@ -96,6 +100,8 @@ export default async function EinstellungenPage() {
                 <th className="px-4 py-2">Pack</th>
                 <th className="px-4 py-2">Verknüpft mit</th>
                 <th className="px-4 py-2">SKU eingeben</th>
+                <th className="px-4 py-2">Bestand (Cache)</th>
+                <th className="px-4 py-2">Bestand korrigieren</th>
               </tr>
             </thead>
             <tbody>
@@ -109,6 +115,16 @@ export default async function EinstellungenPage() {
                     </td>
                     <td className="px-4 py-2">
                       <VariantLinkForm variantId={v.id} disabled={!configured} />
+                    </td>
+                    <td className="px-4 py-2 text-neutral-600">
+                      {v.shopifyVariantId ? v.packStock : "–"}
+                    </td>
+                    <td className="px-4 py-2">
+                      {v.shopifyVariantId && configured ? (
+                        <CorrectShopifyStockForm variantId={v.id} />
+                      ) : (
+                        <span className="text-neutral-400">–</span>
+                      )}
                     </td>
                   </tr>
                 )),

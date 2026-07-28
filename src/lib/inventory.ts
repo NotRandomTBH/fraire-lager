@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { adjustInventory, isShopifyConfigured } from "@/lib/shopify";
+import { adjustInventory, correctInventoryLevel, isShopifyConfigured } from "@/lib/shopify";
 
 export async function listSizesWithVariants() {
   return prisma.size.findMany({
@@ -117,6 +117,41 @@ export async function packStock(input: {
       });
     }
   }
+}
+
+// Korrigiert den Shopify-Packungsbestand einer verknüpften Variante direkt aus
+// dem Tool auf einen absoluten Wert (z.B. nach einer Inventur), statt dafür
+// ins Shopify-Admin wechseln zu müssen.
+export async function correctShopifyVariantStock(input: { variantId: string; newQuantity: number }) {
+  if (input.newQuantity < 0) {
+    throw new Error("Bestand darf nicht negativ sein.");
+  }
+
+  const variant = await prisma.shopifyVariant.findUniqueOrThrow({
+    where: { id: input.variantId },
+    include: { size: true },
+  });
+  if (!variant.shopifyInventoryItemId) {
+    throw new Error("Diese Kombination ist noch nicht mit Shopify verknüpft.");
+  }
+
+  const config = await prisma.shopifyConfig.findUnique({ where: { id: "singleton" } });
+  if (!config?.locationId) {
+    throw new Error("Keine Shopify-Location konfiguriert (Einstellungen).");
+  }
+
+  const { previous } = await correctInventoryLevel(
+    variant.shopifyInventoryItemId,
+    config.locationId,
+    input.newQuantity,
+  );
+
+  await prisma.shopifyVariant.update({
+    where: { id: variant.id },
+    data: { packStock: input.newQuantity },
+  });
+
+  return { sizeLabel: variant.size.label, packSize: variant.packSize, previous, newQuantity: input.newQuantity };
 }
 
 export async function adjustLooseStock(input: {

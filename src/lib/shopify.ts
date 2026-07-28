@@ -140,6 +140,31 @@ export async function adjustInventory(
   );
 }
 
+// Fragt den tatsächlich aktuellen ("live") verfügbaren Bestand einer
+// Inventory-Item-ID an einer Location direkt bei Shopify ab (nicht aus dem
+// lokalen Cache).
+export async function fetchLiveInventoryLevel(inventoryItemId: string, locationId: string) {
+  const data = await shopifyGraphQL<{
+    inventoryItem: {
+      inventoryLevel: { quantities: { name: string; quantity: number }[] } | null;
+    } | null;
+  }>(
+    `query($id: ID!, $locationId: ID!) {
+      inventoryItem(id: $id) {
+        inventoryLevel(locationId: $locationId) {
+          quantities(names: ["available"]) { name quantity }
+        }
+      }
+    }`,
+    { id: inventoryItemId, locationId },
+  );
+
+  return (
+    data.inventoryItem?.inventoryLevel?.quantities.find((q) => q.name === "available")
+      ?.quantity ?? 0
+  );
+}
+
 export async function syncInventoryLevels() {
   const config = await prisma.shopifyConfig.findUnique({
     where: { id: "singleton" },
@@ -153,25 +178,10 @@ export async function syncInventoryLevels() {
   });
 
   for (const variant of variants) {
-    const data = await shopifyGraphQL<{
-      inventoryItem: {
-        inventoryLevel: { quantities: { name: string; quantity: number }[] } | null;
-      } | null;
-    }>(
-      `query($id: ID!, $locationId: ID!) {
-        inventoryItem(id: $id) {
-          inventoryLevel(locationId: $locationId) {
-            quantities(names: ["available"]) { name quantity }
-          }
-        }
-      }`,
-      { id: variant.shopifyInventoryItemId, locationId: config.locationId },
+    const available = await fetchLiveInventoryLevel(
+      variant.shopifyInventoryItemId!,
+      config.locationId,
     );
-
-    const available =
-      data.inventoryItem?.inventoryLevel?.quantities.find(
-        (q) => q.name === "available",
-      )?.quantity ?? 0;
 
     await prisma.shopifyVariant.update({
       where: { id: variant.id },
@@ -183,6 +193,23 @@ export async function syncInventoryLevels() {
     where: { id: "singleton" },
     data: { lastInventorySync: new Date() },
   });
+}
+
+// Korrigiert den Shopify-Bestand einer Variante auf einen absoluten Wert
+// (z.B. nach einer Inventur oder wenn er durch manuelle Änderungen in Shopify
+// nicht mehr stimmt). Holt zuerst den echten Live-Wert, damit das Delta exakt
+// stimmt und nicht auf einem eventuell veralteten Cache-Wert basiert.
+export async function correctInventoryLevel(
+  inventoryItemId: string,
+  locationId: string,
+  newQuantity: number,
+) {
+  const live = await fetchLiveInventoryLevel(inventoryItemId, locationId);
+  const delta = newQuantity - live;
+  if (delta !== 0) {
+    await adjustInventory(inventoryItemId, locationId, delta);
+  }
+  return { previous: live, newQuantity };
 }
 
 const AUTO_SYNC_MIN_INTERVAL_MS = 60_000;

@@ -13,6 +13,7 @@ import {
   addDefectNote,
   addDefectPhotos,
   adjustLooseStock,
+  correctShopifyVariantStock,
   createDefectReason,
   editDefectReport,
   getDefectReportsForExport,
@@ -353,6 +354,32 @@ export async function linkShopifyVariantAction(
     });
     revalidatePath("/einstellungen");
     return { ok: true, message: `Verknüpft mit "${found.product.title} – ${found.title}".` };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function correctShopifyStockAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    await requireUser();
+    if (!isShopifyConfigured()) {
+      throw new Error(
+        "Shopify ist nicht konfiguriert (SHOPIFY_STORE_DOMAIN / SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET in .env setzen).",
+      );
+    }
+    const result = await correctShopifyVariantStock({
+      variantId: String(formData.get("variantId")),
+      newQuantity: Number(formData.get("newQuantity")),
+    });
+    revalidatePath("/");
+    revalidatePath("/einstellungen");
+    return {
+      ok: true,
+      message: `${result.sizeLabel} ${result.packSize}er: ${result.previous} → ${result.newQuantity} korrigiert.`,
+    };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
   }
