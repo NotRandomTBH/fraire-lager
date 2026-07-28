@@ -134,7 +134,7 @@ export function StockExitForm({
 
       {packed && shopifyConfigured && (
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="pushToShopify" defaultChecked={variantLinked} disabled={!variantLinked} />
+          <input type="checkbox" name="pushToShopify" defaultChecked={false} disabled={!variantLinked} />
           An Shopify übertragen (Bestand dort auch reduzieren)
           {!variantLinked && (
             <span className="text-neutral-400">– keine Variante verknüpft</span>

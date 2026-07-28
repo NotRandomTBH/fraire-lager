@@ -26,7 +26,8 @@ verpackt werden. Mit Nachbestell-Alerts und optionalem Shopify-Abgleich
   Verpacken wird blockiert, wenn nicht genug davon da ist.
 - **Verpackungsmaterial** (auf der Wareneingang-Seite): eigener Bestand für
   die 1er/3er/5er-Verpackungen selbst (Beutel/Kartons), grössenunabhängig
-  nachfüllbar.
+  nachfüllbar und – für Inventurkorrekturen – direkt auf einen tatsächlich
+  gezählten Wert korrigierbar.
 - **Dashboard**: aktueller Bestand pro Grösse, automatische Nachbestell-Ampel
   (Rot/Gelb/Grün/Grau) + Reichweite in Tagen pro Grösse und fürs
   Verpackungsmaterial, Gesamtstatus oben (schlechteste Grösse, da in einer

@@ -27,8 +27,14 @@ export default async function ProtectedLayout({
   return (
     <>
       <header className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
-          <span className="font-semibold">Lagerverwaltung</span>
+        <div className="mx-auto max-w-5xl space-y-2 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold">Lagerverwaltung</span>
+            <div className="flex items-center gap-3 text-sm text-neutral-500">
+              <span>{user.name}</span>
+              <LogoutButton />
+            </div>
+          </div>
           <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
             {NAV_ITEMS.map((item) => (
               <Link
@@ -39,10 +45,6 @@ export default async function ProtectedLayout({
                 {item.label}
               </Link>
             ))}
-            <span className="ml-2 border-l border-neutral-200 pl-4 text-neutral-500">
-              {user.name}
-            </span>
-            <LogoutButton />
           </nav>
         </div>
       </header>

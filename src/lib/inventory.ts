@@ -368,6 +368,39 @@ export async function receivePackagingStock(input: {
   ]);
 }
 
+export async function adjustPackagingStock(input: {
+  packSize: number;
+  newQuantity: number;
+  note?: string;
+  createdBy?: string;
+}) {
+  if (input.newQuantity < 0) {
+    throw new Error("Bestand darf nicht negativ sein.");
+  }
+
+  const packaging = await prisma.packagingStock.findUnique({ where: { packSize: input.packSize } });
+  const current = packaging?.quantity ?? 0;
+  const delta = input.newQuantity - current;
+  if (delta === 0) return;
+
+  await prisma.$transaction([
+    prisma.packagingStock.upsert({
+      where: { packSize: input.packSize },
+      update: { quantity: input.newQuantity },
+      create: { packSize: input.packSize, quantity: input.newQuantity },
+    }),
+    prisma.packagingMovement.create({
+      data: {
+        packSize: input.packSize,
+        type: "ADJUST",
+        quantityDelta: delta,
+        note: input.note,
+        createdBy: input.createdBy,
+      },
+    }),
+  ]);
+}
+
 export async function listPackagingMovements(limit = 30) {
   return prisma.packagingMovement.findMany({
     orderBy: { createdAt: "desc" },

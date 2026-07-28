@@ -179,6 +179,7 @@ model PackagingStock {
 enum PackagingMovementType {
   RECEIVE // Verpackungsmaterial eingebucht
   USED // beim Verpacken verbraucht (egal welche Unterhosen-Grösse)
+  ADJUST // Inventurkorrektur auf einen tatsächlich gezählten Bestand
 }
 
 model PackagingMovement {

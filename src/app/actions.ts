@@ -13,6 +13,7 @@ import {
   addDefectNote,
   addDefectPhotos,
   adjustLooseStock,
+  adjustPackagingStock,
   correctShopifyVariantStock,
   createDefectReason,
   editDefectReport,
@@ -286,6 +287,27 @@ export async function receivePackagingStockAction(
     revalidatePath("/wareneingang");
     revalidatePath("/verpacken");
     return { ok: true, message: "Verpackungsmaterial gebucht." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function adjustPackagingStockAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    await adjustPackagingStock({
+      packSize: Number(formData.get("packSize")),
+      newQuantity: Number(formData.get("newQuantity")),
+      note: String(formData.get("note") ?? "") || undefined,
+      createdBy: user.name,
+    });
+    revalidatePath("/");
+    revalidatePath("/wareneingang");
+    revalidatePath("/verpacken");
+    return { ok: true, message: "Korrektur gebucht." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { receivePackagingStockAction } from "@/app/actions";
+import { adjustPackagingStockAction, receivePackagingStockAction } from "@/app/actions";
 import { ActionForm } from "@/components/ActionForm";
 import { SubmitButton } from "@/components/SubmitButton";
 
@@ -63,6 +63,48 @@ export function PackagingStockForm({
           />
         </div>
         <SubmitButton>Verpackungsmaterial buchen</SubmitButton>
+      </ActionForm>
+
+      <ActionForm action={adjustPackagingStockAction} resetOnSuccess className="space-y-4">
+        <p className="text-sm font-medium">Bestand korrigieren</p>
+        <p className="text-sm text-neutral-600">
+          Für Inventurkorrekturen: tatsächlich gezählten Bestand eintragen statt einer
+          Zu- oder Abgangsmenge.
+        </p>
+        <div>
+          <label className="mb-1 block text-sm font-medium">Packgrösse</label>
+          <select
+            name="packSize"
+            required
+            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          >
+            {stock.map((s) => (
+              <option key={s.packSize} value={s.packSize}>
+                {s.packSize}er (aktuell {s.quantity})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">Tatsächlicher Bestand</label>
+          <input
+            type="number"
+            name="newQuantity"
+            min={0}
+            required
+            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">Grund (optional)</label>
+          <input
+            type="text"
+            name="note"
+            placeholder="z.B. Inventur"
+            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          />
+        </div>
+        <SubmitButton>Korrektur buchen</SubmitButton>
       </ActionForm>
     </div>
   );
