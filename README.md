@@ -36,6 +36,12 @@ verpackt werden. Mit Nachbestell-Alerts und optionalem Shopify-Abgleich
   vorgeschlagenes Bestelldatum und ein live berechneter Begründungstext.
   Warnt explizit bei "geringer Datenbasis" (< 14 Tage Verkaufshistorie).
   Verpackungsmaterial ebenfalls mit eigener Ampel (niedrigere Priorität).
+- **Austragen**: Unterhosen mit oder ohne Verpackung austragen, die nicht über
+  Shopify verkauft wurden (Muster, Geschenke, Ersatzlieferungen, ...) – mit
+  Begründung, Empfänger und Datum. Reduziert lose/Packungs-Bestand sofort;
+  bei verpackter Ware optional auch den echten Shopify-Bestand.
+- **Austräge**: Protokoll aller Austräge, mehrere Einträge auswählen und als
+  PDF exportieren.
 - **Bewegungen**: vollständige Historie aller Buchungen.
 - **Statistik**: verkaufte Packungen pro Grösse/Packungsgrösse (aus Shopify).
 - **Einstellungen**: Parameter der automatischen Nachbestell-Prognose

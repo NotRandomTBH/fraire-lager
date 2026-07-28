@@ -184,3 +184,84 @@ export async function buildDefectReportsPdf(rows: DefectRow[]): Promise<Uint8Arr
 
   return doc.save();
 }
+
+type StockExitRow = {
+  sizeLabel: string;
+  packSize: number | null;
+  quantity: number;
+  reason: string;
+  recipient: string | null;
+  date: Date;
+  createdBy: string | null;
+};
+
+export async function buildStockExitsPdf(rows: StockExitRow[]): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  let page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  let y = PAGE_HEIGHT - MARGIN;
+
+  function newPageIfNeeded(neededHeight: number) {
+    if (y - neededHeight < MARGIN) {
+      page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+      y = PAGE_HEIGHT - MARGIN;
+    }
+  }
+
+  function drawText(
+    text: string,
+    options: { size?: number; bold?: boolean; color?: [number, number, number] } = {},
+  ) {
+    const size = options.size ?? 10;
+    page.drawText(text, {
+      x: MARGIN,
+      y,
+      size,
+      font: options.bold ? bold : font,
+      color: rgb(...(options.color ?? [0.1, 0.1, 0.1])),
+    });
+    y -= ENTRY_LINE_HEIGHT;
+  }
+
+  drawText("Austrags-Protokoll — fraire", { size: 18, bold: true });
+  drawText(`Erstellt am ${formatDate(new Date(), "de-CH")}`, { size: 10, color: [0.4, 0.4, 0.4] });
+  y -= 10;
+
+  let totalUnits = 0;
+
+  rows.forEach((row, index) => {
+    newPageIfNeeded(90);
+
+    const units = row.packSize ? row.quantity * row.packSize : row.quantity;
+    totalUnits += units;
+    const packLabel = row.packSize ? `${row.quantity} × ${row.packSize}er-Packung` : `${row.quantity} Stück (lose)`;
+
+    drawText(`${index + 1}. Grösse ${row.sizeLabel} — ${packLabel}`, { size: 12, bold: true });
+    drawText(
+      `Datum: ${formatDate(row.date, "de-CH")}${row.createdBy ? `   ·   Ausgetragen von: ${row.createdBy}` : ""}`,
+      { color: [0.35, 0.35, 0.35] },
+    );
+    drawText(`Begründung: ${row.reason}`);
+    if (row.recipient) {
+      drawText(`Empfänger: ${row.recipient}`);
+    }
+
+    y -= 8;
+    newPageIfNeeded(2);
+    page.drawLine({
+      start: { x: MARGIN, y: y + 4 },
+      end: { x: PAGE_WIDTH - MARGIN, y: y + 4 },
+      thickness: 0.5,
+      color: rgb(0.85, 0.85, 0.85),
+    });
+    y -= 10;
+  });
+
+  newPageIfNeeded(30);
+  y -= 6;
+  drawText(`Total: ${rows.length} Positionen, ${totalUnits} Stück gesamt`, { size: 11, bold: true });
+
+  return doc.save();
+}

@@ -44,6 +44,7 @@ model Size {
   shopifyVariants ShopifyVariant[]
   defectReports   DefectReport[]
   dailySales      DailySales[]
+  stockExits      StockExit[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -205,6 +206,24 @@ model DailySales {
   createdAt DateTime @default(now())
 
   @@unique([sizeId, packSize, date])
+}
+
+// Warenausgang ausserhalb des normalen Shopify-Verkaufs (z.B. Muster,
+// Geschenke, Ersatzlieferungen). Reduziert den losen Bestand (packSize null)
+// oder den Packungsbestand einer Grösse (packSize gesetzt) und wird optional
+// auch bei Shopify abgezogen, damit der dortige Bestand stimmt.
+model StockExit {
+  id              String   @id @default(cuid())
+  sizeId          String
+  size            Size     @relation(fields: [sizeId], references: [id])
+  packSize        Int? // null = lose Teile ausgetragen, sonst 1/3/5 = Anzahl Packungen
+  quantity        Int // Anzahl Packungen (wenn packSize gesetzt) oder lose Stück
+  reason          String
+  recipient       String?
+  date            DateTime // Datum des Austrags, frei wählbar (Standard: heute)
+  pushedToShopify Boolean  @default(false)
+  createdBy       String?
+  createdAt       DateTime @default(now())
 }
 
 // Globale Parameter für die automatische Bestellpunkt-Berechnung.

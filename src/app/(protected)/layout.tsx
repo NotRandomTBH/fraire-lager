@@ -7,8 +7,10 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
   { href: "/wareneingang", label: "Wareneingang" },
   { href: "/verpacken", label: "Verpacken" },
+  { href: "/austragen", label: "Austragen" },
   { href: "/bewegungen", label: "Bewegungen" },
   { href: "/defekte", label: "Defekte" },
+  { href: "/austraege", label: "Austräge" },
   { href: "/statistik", label: "Statistik" },
   { href: "/analytics", label: "Analytics" },
   { href: "/einstellungen", label: "Einstellungen" },
@@ -27,7 +29,7 @@ export default async function ProtectedLayout({
       <header className="border-b border-neutral-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
           <span className="font-semibold">Lagerverwaltung</span>
-          <nav className="flex items-center gap-4 text-sm">
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}

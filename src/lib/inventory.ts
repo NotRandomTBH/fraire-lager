@@ -396,3 +396,112 @@ export async function getBestSellers(days = 30) {
     unitsSold: g._sum.packsSold ?? 0,
   }));
 }
+
+// Warenausgang ausserhalb des normalen Shopify-Verkaufs (Muster, Geschenke,
+// Ersatzlieferungen, ...). packSize null/0 = lose Teile austragen (reduziert
+// looseStock direkt); packSize gesetzt = ganze Packungen austragen (reduziert
+// den Packungs-Cache und optional den echten Shopify-Bestand).
+export async function recordStockExit(input: {
+  sizeId: string;
+  packSize?: number | null;
+  quantity: number;
+  reason: string;
+  recipient?: string;
+  date: Date;
+  createdBy?: string;
+  pushToShopify?: boolean;
+}) {
+  if (input.quantity <= 0) {
+    throw new Error("Menge muss grösser als 0 sein.");
+  }
+  const reason = input.reason.trim();
+  if (!reason) {
+    throw new Error("Begründung ist erforderlich.");
+  }
+
+  const size = await prisma.size.findUniqueOrThrow({ where: { id: input.sizeId } });
+
+  if (!input.packSize) {
+    if (size.looseStock < input.quantity) {
+      throw new Error(
+        `Nicht genug lose Teile auf Lager: ${size.looseStock} vorhanden, ${input.quantity} benötigt.`,
+      );
+    }
+
+    await prisma.$transaction([
+      prisma.size.update({
+        where: { id: input.sizeId },
+        data: { looseStock: { decrement: input.quantity } },
+      }),
+      prisma.stockExit.create({
+        data: {
+          sizeId: input.sizeId,
+          packSize: null,
+          quantity: input.quantity,
+          reason,
+          recipient: input.recipient,
+          date: input.date,
+          createdBy: input.createdBy,
+        },
+      }),
+    ]);
+    return;
+  }
+
+  const variant = await prisma.shopifyVariant.findUnique({
+    where: { sizeId_packSize: { sizeId: input.sizeId, packSize: input.packSize } },
+  });
+  if (!variant) {
+    throw new Error("Diese Grösse/Packgrösse-Kombination existiert nicht.");
+  }
+  if (variant.packStock < input.quantity) {
+    throw new Error(
+      `Nicht genug ${input.packSize}er-Packungen vorhanden: ${variant.packStock} vorhanden, ${input.quantity} benötigt.`,
+    );
+  }
+
+  const wantsShopifyPush =
+    Boolean(input.pushToShopify) && isShopifyConfigured() && Boolean(variant.shopifyInventoryItemId);
+
+  await prisma.$transaction([
+    prisma.shopifyVariant.update({
+      where: { id: variant.id },
+      data: { packStock: { decrement: input.quantity } },
+    }),
+    prisma.stockExit.create({
+      data: {
+        sizeId: input.sizeId,
+        packSize: input.packSize,
+        quantity: input.quantity,
+        reason,
+        recipient: input.recipient,
+        date: input.date,
+        createdBy: input.createdBy,
+        pushedToShopify: wantsShopifyPush,
+      },
+    }),
+  ]);
+
+  if (wantsShopifyPush) {
+    const config = await prisma.shopifyConfig.findUnique({ where: { id: "singleton" } });
+    if (variant.shopifyInventoryItemId && config?.locationId) {
+      await adjustInventory(variant.shopifyInventoryItemId, config.locationId, -input.quantity);
+    }
+  }
+}
+
+export async function listStockExits(limit = 100) {
+  return prisma.stockExit.findMany({
+    orderBy: { date: "desc" },
+    take: limit,
+    include: { size: true },
+  });
+}
+
+export async function getStockExitsForExport(ids: string[]) {
+  return prisma.stockExit.findMany({
+    where: { id: { in: ids } },
+    orderBy: { date: "asc" },
+    include: { size: true },
+  });
+}

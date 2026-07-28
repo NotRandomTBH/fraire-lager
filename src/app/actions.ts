@@ -17,12 +17,14 @@ import {
   createDefectReason,
   editDefectReport,
   getDefectReportsForExport,
+  getStockExitsForExport,
   packStock,
   receivePackagingStock,
   receiveStock,
   recordDefect,
+  recordStockExit,
 } from "@/lib/inventory";
-import { buildDefectReportsPdf } from "@/lib/pdf";
+import { buildDefectReportsPdf, buildStockExitsPdf } from "@/lib/pdf";
 import { updateReorderSettings } from "@/lib/reorder";
 import {
   isShopifyConfigured,
@@ -189,6 +191,60 @@ export async function generateDefectPdfAction(reportIds: string[]) {
   return {
     base64: Buffer.from(bytes).toString("base64"),
     filename: `defekte-protokoll-${new Date().toISOString().slice(0, 10)}.pdf`,
+  };
+}
+
+export async function recordStockExitAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    const packSizeRaw = String(formData.get("packSize") ?? "");
+    const dateRaw = String(formData.get("date") ?? "");
+
+    await recordStockExit({
+      sizeId: String(formData.get("sizeId")),
+      packSize: packSizeRaw ? Number(packSizeRaw) : null,
+      quantity: Number(formData.get("quantity")),
+      reason: String(formData.get("reason") ?? ""),
+      recipient: String(formData.get("recipient") ?? "") || undefined,
+      date: dateRaw ? new Date(dateRaw) : new Date(),
+      createdBy: user.name,
+      pushToShopify: formData.get("pushToShopify") === "on",
+    });
+
+    revalidatePath("/");
+    revalidatePath("/austragen");
+    revalidatePath("/austraege");
+    return { ok: true, message: "Austrag gebucht." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function generateStockExitsPdfAction(exitIds: string[]) {
+  await requireUser();
+  if (exitIds.length === 0) {
+    throw new Error("Keine Einträge ausgewählt.");
+  }
+
+  const exits = await getStockExitsForExport(exitIds);
+  const bytes = await buildStockExitsPdf(
+    exits.map((e) => ({
+      sizeLabel: e.size.label,
+      packSize: e.packSize,
+      quantity: e.quantity,
+      reason: e.reason,
+      recipient: e.recipient,
+      date: e.date,
+      createdBy: e.createdBy,
+    })),
+  );
+
+  return {
+    base64: Buffer.from(bytes).toString("base64"),
+    filename: `austraege-protokoll-${new Date().toISOString().slice(0, 10)}.pdf`,
   };
 }
 
