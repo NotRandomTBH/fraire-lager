@@ -1,15 +1,13 @@
-import { getCartonStock, listDefectReasons, listPackagingStock } from "@/lib/inventory";
+import { getCartonStock, listPackagingStock } from "@/lib/inventory";
 import { PackagingStockForm } from "@/components/PackagingStockForm";
 import { CartonStockForm } from "@/components/CartonStockForm";
-import { PackagingDefectForm } from "@/components/PackagingDefectForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function WareneingangVerpackungPage() {
-  const [packagingStock, cartonStock, defectReasons] = await Promise.all([
+  const [packagingStock, cartonStock] = await Promise.all([
     listPackagingStock(),
     getCartonStock(),
-    listDefectReasons(),
   ]);
 
   return (
@@ -31,15 +29,6 @@ export default async function WareneingangVerpackungPage() {
           Grösse oder Verpackungsart.
         </p>
         <CartonStockForm quantity={cartonStock} />
-      </div>
-
-      <div className="space-y-6 border-t border-neutral-200 pt-8">
-        <h2 className="text-lg font-semibold">Defekt erfassen</h2>
-        <p className="text-sm text-neutral-600">
-          Defektes Verpackungsmaterial oder beschädigte Versandkartons
-          dokumentieren (zählt nicht zum verkaufbaren Bestand).
-        </p>
-        <PackagingDefectForm packagingStock={packagingStock} defectReasons={defectReasons} />
       </div>
     </div>
   );

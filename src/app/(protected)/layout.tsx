@@ -9,6 +9,7 @@ const LAGER_ITEMS = [
   { href: "/wareneingang/verpackung", label: "Wareneingang Verpackung" },
   { href: "/warenausgang", label: "Warenausgang" },
   { href: "/verpacken", label: "Verpacken" },
+  { href: "/defekte-erfassen", label: "Defekte erfassen" },
 ];
 
 const REST_NAV_ITEMS = [

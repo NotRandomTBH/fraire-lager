@@ -8,22 +8,22 @@ verpackt werden. Mit Nachbestell-Alerts und optionalem Shopify-Abgleich
 ## Was die App macht
 
 Die Navigation ist in **Dashboard**, das Dropdown-Menü **Lager** (Wareneingang
-Unterhosen/Verpackung, Warenausgang, Verpacken), **Bewegungen**, **Defekte**,
-**Statistik**, **Analytics** und **Einstellungen** gegliedert.
+Unterhosen/Verpackung, Warenausgang, Verpacken, Defekte erfassen),
+**Bewegungen**, **Defekte**, **Statistik**, **Analytics** und
+**Einstellungen** gegliedert.
 
-- **Wareneingang Unterhosen**: neue lose Einzelteile pro Grösse einbuchen,
-  plus getrennt die Anzahl defekter Stück mit Notiz und Fotos (fürs
-  Protokoll – zählt nicht zum verkaufbaren Bestand). Inkl. Bestandskorrektur
-  für Inventuren.
+- **Wareneingang Unterhosen**: neue lose Einzelteile pro Grösse einbuchen.
+  Inkl. Bestandskorrektur für Inventuren.
 - **Wareneingang Verpackung**: eigener Bestand für die 1er/3er/5er-
   Verpackungen (Beutel/Kartons) und für Versandkartons – beide
   grössenunabhängig nachfüllbar und für Inventurkorrekturen direkt auf einen
-  tatsächlich gezählten Wert korrigierbar. Auf derselben Seite lassen sich
-  auch Defekte an Verpackungsmaterial oder Versandkartons erfassen (Menge,
-  Defekt-Art, Notiz, Fotos).
+  tatsächlich gezählten Wert korrigierbar.
+- **Defekte erfassen**: zentrale Stelle für Defekte an Unterhosen (mit
+  Grösse), Verpackungsmaterial (mit Packgrösse) oder Versandkartons – Menge,
+  vorbereitete Defekt-Art (mehrfach auswählbar, neue Arten direkt anlegbar),
+  Notiz und Fotos. Zählt nicht zum verkaufbaren Bestand.
 - **Defekte**: Protokoll aller erfassten Defekte (Unterhosen, Verpackungs-
-  material, Versandkartons) mit Fotos, Menge, vorbereiteten Defekt-Arten
-  (mehrfach auswählbar, neue Arten direkt beim Erfassen anlegbar), Notiz,
+  material, Versandkartons) mit Fotos, Menge, Defekt-Art(en), Notiz,
   Zeitpunkt und wer's erfasst hat. Fotos und Bemerkungen lassen sich
   jederzeit nachträglich hinzufügen; Menge/Notiz bearbeiten verlangt eine
   Begründung (protokolliert). Mehrere Einträge auswählen und als PDF (ohne

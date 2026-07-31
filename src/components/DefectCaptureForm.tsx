@@ -1,22 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { createDefectReasonAction, recordPackagingDefectAction } from "@/app/actions";
+import { createDefectReasonAction, recordDefectAction } from "@/app/actions";
 import { ActionForm } from "@/components/ActionForm";
 import { SubmitButton } from "@/components/SubmitButton";
 import { compressImage } from "@/lib/image";
 
 type DefectReason = { id: string; label: string };
-type ItemType = "VERPACKUNG" | "KARTON";
+type ItemType = "UNTERHOSE" | "VERPACKUNG" | "KARTON";
 
-export function PackagingDefectForm({
+export function DefectCaptureForm({
+  sizes,
   packagingStock,
   defectReasons,
 }: {
+  sizes: { id: string; label: string }[];
   packagingStock: { packSize: number; quantity: number }[];
   defectReasons: DefectReason[];
 }) {
-  const [itemType, setItemType] = useState<ItemType>("VERPACKUNG");
+  const [itemType, setItemType] = useState<ItemType>("UNTERHOSE");
   const [packSize, setPackSize] = useState(packagingStock[0]?.packSize ?? 1);
   const [photos, setPhotos] = useState<string[]>([]);
   const [compressing, setCompressing] = useState(false);
@@ -64,7 +66,7 @@ export function PackagingDefectForm({
 
   return (
     <ActionForm
-      action={recordPackagingDefectAction}
+      action={recordDefectAction}
       resetOnSuccess
       className="space-y-4"
       onSuccess={() => {
@@ -81,12 +83,30 @@ export function PackagingDefectForm({
           onChange={(e) => setItemType(e.target.value as ItemType)}
           className="w-full rounded-md border border-neutral-300 px-3 py-2"
         >
+          <option value="UNTERHOSE">Unterhosen</option>
           <option value="VERPACKUNG">Verpackungsmaterial</option>
           <option value="KARTON">Versandkarton</option>
         </select>
       </div>
 
-      {itemType === "VERPACKUNG" ? (
+      {itemType === "UNTERHOSE" && (
+        <div>
+          <label className="mb-1 block text-sm font-medium">Grösse</label>
+          <select
+            name="sizeId"
+            required
+            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          >
+            {sizes.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {itemType === "VERPACKUNG" && (
         <div>
           <label className="mb-1 block text-sm font-medium">Packgrösse</label>
           <select
@@ -102,9 +122,9 @@ export function PackagingDefectForm({
             ))}
           </select>
         </div>
-      ) : (
-        <input type="hidden" name="packSize" value="" />
       )}
+      {itemType !== "VERPACKUNG" && <input type="hidden" name="packSize" value="" />}
+      {itemType !== "UNTERHOSE" && <input type="hidden" name="sizeId" value="" />}
 
       <div>
         <label className="mb-1 block text-sm font-medium">Anzahl defekt</label>

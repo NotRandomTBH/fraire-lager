@@ -1,15 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { listDefectReasons } from "@/lib/inventory";
 import { WareneingangForm } from "@/components/WareneingangForm";
 import { AdjustStockForm } from "@/components/AdjustStockForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function WareneingangUnterhosenPage() {
-  const [sizes, defectReasons] = await Promise.all([
-    prisma.size.findMany({ orderBy: { order: "asc" } }),
-    listDefectReasons(),
-  ]);
+  const sizes = await prisma.size.findMany({ orderBy: { order: "asc" } });
 
   return (
     <div className="max-w-lg space-y-10">
@@ -18,7 +14,7 @@ export default async function WareneingangUnterhosenPage() {
         <p className="text-sm text-neutral-600">
           Neue lose Unterhosen (unverpackt) einbuchen, z.B. nach Lieferung vom Hersteller.
         </p>
-        <WareneingangForm sizes={sizes} defectReasons={defectReasons} />
+        <WareneingangForm sizes={sizes} />
       </div>
 
       <div className="space-y-6 border-t border-neutral-200 pt-8">

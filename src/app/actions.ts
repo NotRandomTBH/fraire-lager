@@ -55,68 +55,37 @@ export async function receiveStockAction(
     const user = await requireUser();
     const sizeId = String(formData.get("sizeId"));
     const quantity = Number(formData.get("quantity") ?? 0);
-    const defectQuantity = Number(formData.get("defectQuantity") ?? 0);
 
-    if (quantity <= 0 && defectQuantity <= 0) {
-      throw new Error("Menge oder Defekt-Menge angeben.");
+    if (quantity <= 0) {
+      throw new Error("Menge angeben.");
     }
 
-    if (quantity > 0) {
-      await receiveStock({
-        sizeId,
-        quantity,
-        note: String(formData.get("note") ?? "") || undefined,
-        createdBy: user.name,
-      });
-    }
-
-    if (defectQuantity > 0) {
-      const photosRaw = String(formData.get("defectPhotos") ?? "[]");
-      let photoDataUrls: string[] = [];
-      try {
-        photoDataUrls = JSON.parse(photosRaw);
-      } catch {
-        photoDataUrls = [];
-      }
-
-      const reasonsRaw = String(formData.get("defectReasonIds") ?? "[]");
-      let reasonIds: string[] = [];
-      try {
-        reasonIds = JSON.parse(reasonsRaw);
-      } catch {
-        reasonIds = [];
-      }
-
-      await recordDefect({
-        itemType: "UNTERHOSE",
-        sizeId,
-        quantity: defectQuantity,
-        note: String(formData.get("defectNote") ?? "") || undefined,
-        createdBy: user.name,
-        photoDataUrls,
-        reasonIds,
-      });
-    }
+    await receiveStock({
+      sizeId,
+      quantity,
+      note: String(formData.get("note") ?? "") || undefined,
+      createdBy: user.name,
+    });
 
     revalidatePath("/");
     revalidatePath("/bewegungen");
-    revalidatePath("/defekte");
     return { ok: true, message: "Wareneingang gebucht." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
   }
 }
 
-// Defekt-Erfassung für Verpackungsmaterial oder Versandkartons (nicht an
-// einen Wareneingangs-Buchungsvorgang gekoppelt, da diese Materialien separat
-// nachgefüllt werden).
-export async function recordPackagingDefectAction(
+// Zentrale Defekt-Erfassung für Unterhosen, Verpackungsmaterial oder
+// Versandkartons (eigene Seite "Defekte erfassen" im Lager-Menü, nicht mehr
+// an den Wareneingangs-Buchungsvorgang gekoppelt).
+export async function recordDefectAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
   try {
     const user = await requireUser();
-    const itemType = (String(formData.get("itemType") ?? "VERPACKUNG") as DefectItemType);
+    const itemType = (String(formData.get("itemType") ?? "UNTERHOSE") as DefectItemType);
+    const sizeIdRaw = String(formData.get("sizeId") ?? "");
     const packSizeRaw = String(formData.get("packSize") ?? "");
     const quantity = Number(formData.get("quantity") ?? 0);
 
@@ -138,6 +107,7 @@ export async function recordPackagingDefectAction(
 
     await recordDefect({
       itemType,
+      sizeId: sizeIdRaw || undefined,
       packSize: packSizeRaw ? Number(packSizeRaw) : undefined,
       quantity,
       note: String(formData.get("defectNote") ?? "") || undefined,
@@ -146,7 +116,7 @@ export async function recordPackagingDefectAction(
       reasonIds,
     });
 
-    revalidatePath("/wareneingang/verpackung");
+    revalidatePath("/defekte-erfassen");
     revalidatePath("/defekte");
     return { ok: true, message: "Defekt erfasst." };
   } catch (e) {
@@ -220,8 +190,7 @@ export async function editDefectReportAction(
 export async function createDefectReasonAction(label: string) {
   await requireUser();
   const reason = await createDefectReason(label);
-  revalidatePath("/wareneingang/unterhosen");
-  revalidatePath("/wareneingang/verpackung");
+  revalidatePath("/defekte-erfassen");
   return reason;
 }
 
