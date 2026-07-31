@@ -12,6 +12,7 @@ import {
 import {
   addDefectNote,
   addDefectPhotos,
+  adjustCartonStock,
   adjustLooseStock,
   adjustPackagingStock,
   correctShopifyVariantStock,
@@ -20,11 +21,15 @@ import {
   getDefectReportsForExport,
   getStockExitsForExport,
   packStock,
+  receiveCartonStock,
   receivePackagingStock,
   receiveStock,
   recordDefect,
   recordStockExit,
+  type DefectItemType,
+  type StockExitItemType,
 } from "@/lib/inventory";
+import { defectItemLabel } from "@/lib/labels";
 import { buildDefectReportsPdf, buildStockExitsPdf } from "@/lib/pdf";
 import { updateReorderSettings } from "@/lib/reorder";
 import {
@@ -83,6 +88,7 @@ export async function receiveStockAction(
       }
 
       await recordDefect({
+        itemType: "UNTERHOSE",
         sizeId,
         quantity: defectQuantity,
         note: String(formData.get("defectNote") ?? "") || undefined,
@@ -96,6 +102,53 @@ export async function receiveStockAction(
     revalidatePath("/bewegungen");
     revalidatePath("/defekte");
     return { ok: true, message: "Wareneingang gebucht." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+// Defekt-Erfassung für Verpackungsmaterial oder Versandkartons (nicht an
+// einen Wareneingangs-Buchungsvorgang gekoppelt, da diese Materialien separat
+// nachgefüllt werden).
+export async function recordPackagingDefectAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    const itemType = (String(formData.get("itemType") ?? "VERPACKUNG") as DefectItemType);
+    const packSizeRaw = String(formData.get("packSize") ?? "");
+    const quantity = Number(formData.get("quantity") ?? 0);
+
+    const photosRaw = String(formData.get("defectPhotos") ?? "[]");
+    let photoDataUrls: string[] = [];
+    try {
+      photoDataUrls = JSON.parse(photosRaw);
+    } catch {
+      photoDataUrls = [];
+    }
+
+    const reasonsRaw = String(formData.get("defectReasonIds") ?? "[]");
+    let reasonIds: string[] = [];
+    try {
+      reasonIds = JSON.parse(reasonsRaw);
+    } catch {
+      reasonIds = [];
+    }
+
+    await recordDefect({
+      itemType,
+      packSize: packSizeRaw ? Number(packSizeRaw) : undefined,
+      quantity,
+      note: String(formData.get("defectNote") ?? "") || undefined,
+      createdBy: user.name,
+      photoDataUrls,
+      reasonIds,
+    });
+
+    revalidatePath("/wareneingang/verpackung");
+    revalidatePath("/defekte");
+    return { ok: true, message: "Defekt erfasst." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
   }
@@ -167,7 +220,8 @@ export async function editDefectReportAction(
 export async function createDefectReasonAction(label: string) {
   await requireUser();
   const reason = await createDefectReason(label);
-  revalidatePath("/wareneingang");
+  revalidatePath("/wareneingang/unterhosen");
+  revalidatePath("/wareneingang/verpackung");
   return reason;
 }
 
@@ -180,7 +234,7 @@ export async function generateDefectPdfAction(reportIds: string[]) {
   const reports = await getDefectReportsForExport(reportIds);
   const bytes = await buildDefectReportsPdf(
     reports.map((r) => ({
-      sizeLabel: r.size.label,
+      itemLabel: defectItemLabel(r),
       quantity: r.quantity,
       reasons: r.reasons.map((reason) => reason.label),
       note: r.note,
@@ -201,11 +255,14 @@ export async function recordStockExitAction(
 ): Promise<ActionState> {
   try {
     const user = await requireUser();
+    const itemType = (String(formData.get("itemType") ?? "UNTERHOSE") as StockExitItemType);
+    const sizeIdRaw = String(formData.get("sizeId") ?? "");
     const packSizeRaw = String(formData.get("packSize") ?? "");
     const dateRaw = String(formData.get("date") ?? "");
 
     await recordStockExit({
-      sizeId: String(formData.get("sizeId")),
+      itemType,
+      sizeId: sizeIdRaw || null,
       packSize: packSizeRaw ? Number(packSizeRaw) : null,
       quantity: Number(formData.get("quantity")),
       reason: String(formData.get("reason") ?? ""),
@@ -216,8 +273,8 @@ export async function recordStockExitAction(
     });
 
     revalidatePath("/");
-    revalidatePath("/austragen");
-    revalidatePath("/austraege");
+    revalidatePath("/warenausgang");
+    revalidatePath("/bewegungen");
     return { ok: true, message: "Austrag gebucht." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
@@ -233,7 +290,8 @@ export async function generateStockExitsPdfAction(exitIds: string[]) {
   const exits = await getStockExitsForExport(exitIds);
   const bytes = await buildStockExitsPdf(
     exits.map((e) => ({
-      sizeLabel: e.size.label,
+      itemType: e.itemType,
+      sizeLabel: e.size?.label ?? null,
       packSize: e.packSize,
       quantity: e.quantity,
       reason: e.reason,
@@ -265,7 +323,7 @@ export async function packStockAction(
     revalidatePath("/");
     revalidatePath("/bewegungen");
     revalidatePath("/verpacken");
-    revalidatePath("/wareneingang");
+    revalidatePath("/wareneingang/verpackung");
     return { ok: true, message: "Verpackt und Lager aktualisiert." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
@@ -284,8 +342,9 @@ export async function receivePackagingStockAction(
       note: String(formData.get("note") ?? "") || undefined,
       createdBy: user.name,
     });
-    revalidatePath("/wareneingang");
+    revalidatePath("/wareneingang/verpackung");
     revalidatePath("/verpacken");
+    revalidatePath("/");
     return { ok: true, message: "Verpackungsmaterial gebucht." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
@@ -305,8 +364,46 @@ export async function adjustPackagingStockAction(
       createdBy: user.name,
     });
     revalidatePath("/");
-    revalidatePath("/wareneingang");
+    revalidatePath("/wareneingang/verpackung");
     revalidatePath("/verpacken");
+    return { ok: true, message: "Korrektur gebucht." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function receiveCartonStockAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    await receiveCartonStock({
+      quantity: Number(formData.get("quantity")),
+      note: String(formData.get("note") ?? "") || undefined,
+      createdBy: user.name,
+    });
+    revalidatePath("/wareneingang/verpackung");
+    revalidatePath("/");
+    return { ok: true, message: "Kartons gebucht." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function adjustCartonStockAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    await adjustCartonStock({
+      newQuantity: Number(formData.get("newQuantity")),
+      note: String(formData.get("note") ?? "") || undefined,
+      createdBy: user.name,
+    });
+    revalidatePath("/wareneingang/verpackung");
+    revalidatePath("/");
     return { ok: true, message: "Korrektur gebucht." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };

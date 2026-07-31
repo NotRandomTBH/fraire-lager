@@ -7,43 +7,54 @@ verpackt werden. Mit Nachbestell-Alerts und optionalem Shopify-Abgleich
 
 ## Was die App macht
 
-- **Wareneingang**: neue lose Einzelteile pro Grösse einbuchen, plus getrennt
-  die Anzahl defekter Stück mit Notiz und Fotos (fürs Protokoll – zählt nicht
-  zum verkaufbaren Bestand).
-- **Defekte**: Protokoll aller erfassten Defekte mit Fotos, Menge,
-  vorbereiteten Defekt-Arten (mehrfach auswählbar, neue Arten direkt beim
-  Erfassen anlegbar), Notiz, Zeitpunkt und wer's erfasst hat. Fotos und
-  Bemerkungen lassen sich jederzeit nachträglich hinzufügen; Menge/Notiz
-  bearbeiten verlangt eine Begründung (protokolliert). Mehrere Einträge
-  auswählen und als PDF (ohne Fotos) exportieren, z.B. für den Produzenten –
-  das PDF hat eine zweite Seite auf Portugiesisch (feste Begriffe und
-  vorbereitete Defekt-Arten übersetzt; frei getippte Notizen bleiben Deutsch).
+Die Navigation ist in **Dashboard**, das Dropdown-Menü **Lager** (Wareneingang
+Unterhosen/Verpackung, Warenausgang, Verpacken), **Bewegungen**, **Defekte**,
+**Statistik**, **Analytics** und **Einstellungen** gegliedert.
+
+- **Wareneingang Unterhosen**: neue lose Einzelteile pro Grösse einbuchen,
+  plus getrennt die Anzahl defekter Stück mit Notiz und Fotos (fürs
+  Protokoll – zählt nicht zum verkaufbaren Bestand). Inkl. Bestandskorrektur
+  für Inventuren.
+- **Wareneingang Verpackung**: eigener Bestand für die 1er/3er/5er-
+  Verpackungen (Beutel/Kartons) und für Versandkartons – beide
+  grössenunabhängig nachfüllbar und für Inventurkorrekturen direkt auf einen
+  tatsächlich gezählten Wert korrigierbar. Auf derselben Seite lassen sich
+  auch Defekte an Verpackungsmaterial oder Versandkartons erfassen (Menge,
+  Defekt-Art, Notiz, Fotos).
+- **Defekte**: Protokoll aller erfassten Defekte (Unterhosen, Verpackungs-
+  material, Versandkartons) mit Fotos, Menge, vorbereiteten Defekt-Arten
+  (mehrfach auswählbar, neue Arten direkt beim Erfassen anlegbar), Notiz,
+  Zeitpunkt und wer's erfasst hat. Fotos und Bemerkungen lassen sich
+  jederzeit nachträglich hinzufügen; Menge/Notiz bearbeiten verlangt eine
+  Begründung (protokolliert). Mehrere Einträge auswählen und als PDF (ohne
+  Fotos) exportieren, z.B. für den Produzenten – das PDF hat eine zweite
+  Seite auf Portugiesisch (feste Begriffe und vorbereitete Defekt-Arten
+  übersetzt; frei getippte Notizen bleiben Deutsch).
 - **Verpacken**: lose Teile zu einer Packung (1er/3er/5er) zusammenstellen –
   reduziert automatisch den losen Bestand und protokolliert die Bewegung.
   Ist die Packung mit Shopify verknüpft, wird deren Shopify-Bestand direkt
   um die verpackte Menge erhöht. Verbraucht dabei automatisch das passende
   Verpackungsmaterial (1er/3er/5er) – unabhängig von der Unterhosen-Grösse,
   Verpacken wird blockiert, wenn nicht genug davon da ist.
-- **Verpackungsmaterial** (auf der Wareneingang-Seite): eigener Bestand für
-  die 1er/3er/5er-Verpackungen selbst (Beutel/Kartons), grössenunabhängig
-  nachfüllbar und – für Inventurkorrekturen – direkt auf einen tatsächlich
-  gezählten Wert korrigierbar.
+- **Warenausgang**: Unterhosen (lose oder verpackt), Verpackungsmaterial oder
+  Versandkartons austragen, die nicht über Shopify verkauft wurden (Muster,
+  Geschenke, Ersatzlieferungen, Verschleiss, ...) – mit Begründung, Empfänger
+  und Datum. Reduziert den jeweiligen Bestand sofort; bei verpackten
+  Unterhosen optional auch den echten Shopify-Bestand.
+- **Bewegungen**: vereinheitlichtes Protokoll aller Bestandsbewegungen
+  (Wareneingang, Verpackt, Korrektur, Austrag) über Unterhosen,
+  Verpackungsmaterial und Versandkartons hinweg. Austräge lassen sich darin
+  auswählen und als PDF exportieren.
 - **Dashboard**: aktueller Bestand pro Grösse, automatische Nachbestell-Ampel
   (Rot/Gelb/Grün/Grau) + Reichweite in Tagen pro Grösse und fürs
   Verpackungsmaterial, Gesamtstatus oben (schlechteste Grösse, da in einer
-  MOQ-Charge zusammen bestellt wird), plus Bestseller der letzten 30 Tage.
+  MOQ-Charge zusammen bestellt wird), Versandkarton-Bestand, plus Bestseller
+  der letzten 30 Tage.
 - **Analytics**: pro Grösse ein Tagesverkaufs-Chart (45 Tage), Bestand-
   Aufschlüsselung (lose/verpackt), Bestellpunkt, Tage bis Bestellung nötig,
   vorgeschlagenes Bestelldatum und ein live berechneter Begründungstext.
   Warnt explizit bei "geringer Datenbasis" (< 14 Tage Verkaufshistorie).
   Verpackungsmaterial ebenfalls mit eigener Ampel (niedrigere Priorität).
-- **Austragen**: Unterhosen mit oder ohne Verpackung austragen, die nicht über
-  Shopify verkauft wurden (Muster, Geschenke, Ersatzlieferungen, ...) – mit
-  Begründung, Empfänger und Datum. Reduziert lose/Packungs-Bestand sofort;
-  bei verpackter Ware optional auch den echten Shopify-Bestand.
-- **Austräge**: Protokoll aller Austräge, mehrere Einträge auswählen und als
-  PDF exportieren.
-- **Bewegungen**: vollständige Historie aller Buchungen.
 - **Statistik**: verkaufte Packungen pro Grösse/Packungsgrösse (aus Shopify).
 - **Einstellungen**: Parameter der automatischen Nachbestell-Prognose
   (Lieferzeit/Puffer/Warnfenster, Standard 80/14/30 Tage), Nachbestell-

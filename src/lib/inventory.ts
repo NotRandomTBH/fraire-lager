@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { adjustInventory, correctInventoryLevel, isShopifyConfigured } from "@/lib/shopify";
+import { stockExitItemLabel } from "@/lib/labels";
 
 export async function listSizesWithVariants() {
   return prisma.size.findMany({
@@ -181,8 +182,12 @@ export async function adjustLooseStock(input: {
   ]);
 }
 
+export type DefectItemType = "UNTERHOSE" | "VERPACKUNG" | "KARTON";
+
 export async function recordDefect(input: {
-  sizeId: string;
+  itemType?: DefectItemType;
+  sizeId?: string;
+  packSize?: number;
   quantity: number;
   note?: string;
   createdBy?: string;
@@ -192,10 +197,19 @@ export async function recordDefect(input: {
   if (input.quantity <= 0) {
     throw new Error("Defekt-Menge muss grösser als 0 sein.");
   }
+  const itemType = input.itemType ?? "UNTERHOSE";
+  if (itemType === "UNTERHOSE" && !input.sizeId) {
+    throw new Error("Grösse ist erforderlich.");
+  }
+  if (itemType === "VERPACKUNG" && !input.packSize) {
+    throw new Error("Packgrösse ist erforderlich.");
+  }
 
   await prisma.defectReport.create({
     data: {
-      sizeId: input.sizeId,
+      itemType,
+      sizeId: itemType === "UNTERHOSE" ? input.sizeId : null,
+      packSize: itemType === "VERPACKUNG" ? input.packSize : null,
       quantity: input.quantity,
       note: input.note,
       createdBy: input.createdBy,
@@ -408,6 +422,74 @@ export async function listPackagingMovements(limit = 30) {
   });
 }
 
+export async function getCartonStock() {
+  const stock = await prisma.cartonStock.findUnique({ where: { id: "singleton" } });
+  return stock?.quantity ?? 0;
+}
+
+export async function receiveCartonStock(input: {
+  quantity: number;
+  note?: string;
+  createdBy?: string;
+}) {
+  if (input.quantity <= 0) {
+    throw new Error("Menge muss grösser als 0 sein.");
+  }
+
+  await prisma.$transaction([
+    prisma.cartonStock.upsert({
+      where: { id: "singleton" },
+      update: { quantity: { increment: input.quantity } },
+      create: { id: "singleton", quantity: input.quantity },
+    }),
+    prisma.cartonMovement.create({
+      data: {
+        type: "RECEIVE",
+        quantityDelta: input.quantity,
+        note: input.note,
+        createdBy: input.createdBy,
+      },
+    }),
+  ]);
+}
+
+export async function adjustCartonStock(input: {
+  newQuantity: number;
+  note?: string;
+  createdBy?: string;
+}) {
+  if (input.newQuantity < 0) {
+    throw new Error("Bestand darf nicht negativ sein.");
+  }
+
+  const current = await prisma.cartonStock.findUnique({ where: { id: "singleton" } });
+  const delta = input.newQuantity - (current?.quantity ?? 0);
+  if (delta === 0) return;
+
+  await prisma.$transaction([
+    prisma.cartonStock.upsert({
+      where: { id: "singleton" },
+      update: { quantity: input.newQuantity },
+      create: { id: "singleton", quantity: input.newQuantity },
+    }),
+    prisma.cartonMovement.create({
+      data: {
+        type: "ADJUST",
+        quantityDelta: delta,
+        note: input.note,
+        createdBy: input.createdBy,
+      },
+    }),
+  ]);
+}
+
+export async function listCartonMovements(limit = 30) {
+  return prisma.cartonMovement.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+}
+
 export async function getBestSellers(days = 30) {
   const since = new Date();
   since.setDate(since.getDate() - days);
@@ -430,12 +512,16 @@ export async function getBestSellers(days = 30) {
   }));
 }
 
+export type StockExitItemType = "UNTERHOSE" | "VERPACKUNGSMATERIAL" | "KARTON";
+
 // Warenausgang ausserhalb des normalen Shopify-Verkaufs (Muster, Geschenke,
-// Ersatzlieferungen, ...). packSize null/0 = lose Teile austragen (reduziert
-// looseStock direkt); packSize gesetzt = ganze Packungen austragen (reduziert
-// den Packungs-Cache und optional den echten Shopify-Bestand).
+// Ersatzlieferungen, ...) – für Unterhosen (lose oder verpackt),
+// Verpackungsmaterial oder Versandkartons. Reduziert jeweils den passenden
+// lokalen Bestand und bei verpackten Unterhosen optional auch den echten
+// Shopify-Bestand.
 export async function recordStockExit(input: {
-  sizeId: string;
+  itemType?: StockExitItemType;
+  sizeId?: string | null;
   packSize?: number | null;
   quantity: number;
   reason: string;
@@ -451,7 +537,72 @@ export async function recordStockExit(input: {
   if (!reason) {
     throw new Error("Begründung ist erforderlich.");
   }
+  const itemType = input.itemType ?? "UNTERHOSE";
 
+  if (itemType === "KARTON") {
+    const current = await prisma.cartonStock.findUnique({ where: { id: "singleton" } });
+    const available = current?.quantity ?? 0;
+    if (available < input.quantity) {
+      throw new Error(
+        `Nicht genug Versandkartons vorhanden: ${available} vorhanden, ${input.quantity} benötigt.`,
+      );
+    }
+
+    await prisma.$transaction([
+      prisma.cartonStock.update({
+        where: { id: "singleton" },
+        data: { quantity: { decrement: input.quantity } },
+      }),
+      prisma.stockExit.create({
+        data: {
+          itemType: "KARTON",
+          quantity: input.quantity,
+          reason,
+          recipient: input.recipient,
+          date: input.date,
+          createdBy: input.createdBy,
+        },
+      }),
+    ]);
+    return;
+  }
+
+  if (itemType === "VERPACKUNGSMATERIAL") {
+    if (!input.packSize) {
+      throw new Error("Packgrösse ist erforderlich.");
+    }
+    const packaging = await prisma.packagingStock.findUnique({ where: { packSize: input.packSize } });
+    const available = packaging?.quantity ?? 0;
+    if (available < input.quantity) {
+      throw new Error(
+        `Nicht genug ${input.packSize}er-Verpackungsmaterial vorhanden: ${available} vorhanden, ${input.quantity} benötigt.`,
+      );
+    }
+
+    await prisma.$transaction([
+      prisma.packagingStock.update({
+        where: { packSize: input.packSize },
+        data: { quantity: { decrement: input.quantity } },
+      }),
+      prisma.stockExit.create({
+        data: {
+          itemType: "VERPACKUNGSMATERIAL",
+          packSize: input.packSize,
+          quantity: input.quantity,
+          reason,
+          recipient: input.recipient,
+          date: input.date,
+          createdBy: input.createdBy,
+        },
+      }),
+    ]);
+    return;
+  }
+
+  // itemType === "UNTERHOSE"
+  if (!input.sizeId) {
+    throw new Error("Grösse ist erforderlich.");
+  }
   const size = await prisma.size.findUniqueOrThrow({ where: { id: input.sizeId } });
 
   if (!input.packSize) {
@@ -468,6 +619,7 @@ export async function recordStockExit(input: {
       }),
       prisma.stockExit.create({
         data: {
+          itemType: "UNTERHOSE",
           sizeId: input.sizeId,
           packSize: null,
           quantity: input.quantity,
@@ -503,6 +655,7 @@ export async function recordStockExit(input: {
     }),
     prisma.stockExit.create({
       data: {
+        itemType: "UNTERHOSE",
         sizeId: input.sizeId,
         packSize: input.packSize,
         quantity: input.quantity,
@@ -537,4 +690,105 @@ export async function getStockExitsForExport(ids: string[]) {
     orderBy: { date: "asc" },
     include: { size: true },
   });
+}
+
+const MOVEMENT_TYPE_LABEL: Record<string, string> = {
+  RECEIVE: "Wareneingang",
+  PACK: "Verpackt",
+  ADJUST: "Korrektur",
+};
+
+const PACKAGING_TYPE_LABEL: Record<string, string> = {
+  RECEIVE: "Wareneingang",
+  USED: "Verpackt (verbraucht)",
+  EXIT: "Austrag",
+  ADJUST: "Korrektur",
+};
+
+const CARTON_TYPE_LABEL: Record<string, string> = {
+  RECEIVE: "Wareneingang",
+  EXIT: "Austrag",
+  ADJUST: "Korrektur",
+};
+
+export type UnifiedMovement = {
+  id: string;
+  date: Date;
+  category: "Unterhosen" | "Verpackung" | "Karton";
+  typeLabel: string;
+  quantityDelta: number;
+  details: string;
+  createdBy: string | null;
+  exitId?: string; // nur bei Austrägen gesetzt (für PDF-Export-Auswahl)
+};
+
+// Vereinigt Wareneingang/Verpackt/Korrektur (StockMovement), Austräge
+// (StockExit) sowie Verpackungsmaterial- und Karton-Bewegungen zu einem
+// einzigen chronologischen Bewegungsprotokoll ("Bewegungen").
+export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> {
+  const [stockMovements, stockExits, packagingMovements, cartonMovements] = await Promise.all([
+    prisma.stockMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit, include: { size: true } }),
+    prisma.stockExit.findMany({ orderBy: { date: "desc" }, take: limit, include: { size: true } }),
+    prisma.packagingMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit }),
+    prisma.cartonMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit }),
+  ]);
+
+  const unified: UnifiedMovement[] = [];
+
+  for (const m of stockMovements) {
+    unified.push({
+      id: `stock-${m.id}`,
+      date: m.createdAt,
+      category: "Unterhosen",
+      typeLabel: MOVEMENT_TYPE_LABEL[m.type] ?? m.type,
+      quantityDelta: m.quantityDelta,
+      details:
+        m.type === "PACK" && m.packSize && m.packQuantity
+          ? `${m.size.label}: ${m.packQuantity}× ${m.packSize}er Pack`
+          : `${m.size.label}${m.note ? `: ${m.note}` : ""}`,
+      createdBy: m.createdBy,
+    });
+  }
+
+  for (const e of stockExits) {
+    const label = stockExitItemLabel(e);
+    unified.push({
+      id: `exit-${e.id}`,
+      date: e.date,
+      category:
+        e.itemType === "VERPACKUNGSMATERIAL" ? "Verpackung" : e.itemType === "KARTON" ? "Karton" : "Unterhosen",
+      typeLabel: "Austrag",
+      quantityDelta: -e.quantity,
+      details: `${label} · ${e.reason}${e.recipient ? ` · ${e.recipient}` : ""}`,
+      createdBy: e.createdBy,
+      exitId: e.id,
+    });
+  }
+
+  for (const p of packagingMovements) {
+    unified.push({
+      id: `packaging-${p.id}`,
+      date: p.createdAt,
+      category: "Verpackung",
+      typeLabel: PACKAGING_TYPE_LABEL[p.type] ?? p.type,
+      quantityDelta: p.quantityDelta,
+      details: `${p.packSize}er${p.note ? `: ${p.note}` : ""}`,
+      createdBy: p.createdBy,
+    });
+  }
+
+  for (const c of cartonMovements) {
+    unified.push({
+      id: `carton-${c.id}`,
+      date: c.createdAt,
+      category: "Karton",
+      typeLabel: CARTON_TYPE_LABEL[c.type] ?? c.type,
+      quantityDelta: c.quantityDelta,
+      details: c.note ?? "",
+      createdBy: c.createdBy,
+    });
+  }
+
+  unified.sort((a, b) => b.date.getTime() - a.date.getTime());
+  return unified.slice(0, limit);
 }

@@ -2,15 +2,18 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { LogoutButton } from "@/components/LogoutButton";
+import { NavDropdown } from "@/components/NavDropdown";
 
-const NAV_ITEMS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/wareneingang", label: "Wareneingang" },
+const LAGER_ITEMS = [
+  { href: "/wareneingang/unterhosen", label: "Wareneingang Unterhosen" },
+  { href: "/wareneingang/verpackung", label: "Wareneingang Verpackung" },
+  { href: "/warenausgang", label: "Warenausgang" },
   { href: "/verpacken", label: "Verpacken" },
-  { href: "/austragen", label: "Austragen" },
+];
+
+const REST_NAV_ITEMS = [
   { href: "/bewegungen", label: "Bewegungen" },
   { href: "/defekte", label: "Defekte" },
-  { href: "/austraege", label: "Austräge" },
   { href: "/statistik", label: "Statistik" },
   { href: "/analytics", label: "Analytics" },
   { href: "/einstellungen", label: "Einstellungen" },
@@ -36,7 +39,11 @@ export default async function ProtectedLayout({
             </div>
           </div>
           <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            {NAV_ITEMS.map((item) => (
+            <Link href="/" className="text-neutral-600 hover:text-neutral-900">
+              Dashboard
+            </Link>
+            <NavDropdown label="Lager" items={LAGER_ITEMS} />
+            {REST_NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

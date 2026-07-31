@@ -9,16 +9,19 @@ import {
 import { ActionForm } from "@/components/ActionForm";
 import { SubmitButton } from "@/components/SubmitButton";
 import { compressImage } from "@/lib/image";
+import { defectItemLabel } from "@/lib/labels";
 
 const FIELD_LABEL: Record<string, string> = { quantity: "Menge", note: "Notiz" };
 
 export type DefectReportData = {
   id: string;
+  itemType: string;
   quantity: number;
   note: string | null;
   createdBy: string | null;
   createdAt: Date;
-  size: { label: string };
+  size: { label: string } | null;
+  packSize: number | null;
   photos: { id: string; dataUrl: string }[];
   reasons: { id: string; label: string }[];
   notes: { id: string; text: string; createdBy: string | null; createdAt: Date }[];
@@ -56,7 +59,7 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
     <div className="rounded-md border border-neutral-200 bg-white p-4">
       <div className="flex items-center justify-between text-sm">
         <div>
-          <span className="font-medium">{report.size.label}</span>
+          <span className="font-medium">{defectItemLabel(report)}</span>
           <span className="text-neutral-500"> · {report.quantity} Stück defekt</span>
         </div>
         <div className="text-neutral-500">

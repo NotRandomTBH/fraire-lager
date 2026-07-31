@@ -104,13 +104,23 @@ model ShopifyConfig {
   lastSalesSync     DateTime?
 }
 
+enum DefectItemType {
+  UNTERHOSE // sizeId gesetzt, packSize leer
+  VERPACKUNG // packSize gesetzt (1/3/5), sizeId leer
+  KARTON // weder sizeId noch packSize
+}
+
 // Protokoll defekter Ware bei einer Lieferung (unabhängig vom losen Bestand,
-// nur zur Dokumentation – zählt nicht zum verkaufbaren Lagerbestand).
+// nur zur Dokumentation – zählt nicht zum verkaufbaren Lagerbestand). Kann
+// sich auf Unterhosen (mit Grösse), Verpackungsmaterial (mit Packgrösse)
+// oder Versandkartons beziehen.
 model DefectReport {
-  id        String   @id @default(cuid())
-  sizeId    String
-  size      Size     @relation(fields: [sizeId], references: [id])
-  quantity  Int
+  id       String         @id @default(cuid())
+  itemType DefectItemType @default(UNTERHOSE)
+  sizeId   String?
+  size     Size?          @relation(fields: [sizeId], references: [id])
+  packSize Int? // nur bei itemType VERPACKUNG: 1, 3 oder 5
+  quantity Int
   note      String?
   createdBy String?
   createdAt DateTime @default(now())
@@ -179,6 +189,7 @@ model PackagingStock {
 enum PackagingMovementType {
   RECEIVE // Verpackungsmaterial eingebucht
   USED // beim Verpacken verbraucht (egal welche Unterhosen-Grösse)
+  EXIT // manueller Austrag (Warenausgang), nicht durchs Verpacken
   ADJUST // Inventurkorrektur auf einen tatsächlich gezählten Bestand
 }
 
@@ -190,6 +201,30 @@ model PackagingMovement {
   note          String?
   createdBy     String?
   createdAt     DateTime              @default(now())
+}
+
+// Bestand an Versandkartons (für den Versand fertiger Bestellungen) –
+// grössen-/packgrössenunabhängig, ein einzelner Zähler.
+model CartonStock {
+  id        String   @id @default("singleton")
+  quantity  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum CartonMovementType {
+  RECEIVE // Kartons eingebucht
+  EXIT // manueller Austrag (z.B. für Versand verwendet, beschädigt)
+  ADJUST // Inventurkorrektur auf einen tatsächlich gezählten Bestand
+}
+
+model CartonMovement {
+  id            String             @id @default(cuid())
+  type          CartonMovementType
+  quantityDelta Int
+  note          String?
+  createdBy     String?
+  createdAt     DateTime           @default(now())
 }
 
 // Verkaufte Packungen pro Grösse+Packgrösse+Tag (aus Shopify-Bestellungen).
@@ -209,16 +244,24 @@ model DailySales {
   @@unique([sizeId, packSize, date])
 }
 
+enum StockExitItemType {
+  UNTERHOSE // sizeId gesetzt; packSize null = lose Teile, sonst 1/3/5 = Packungen
+  VERPACKUNGSMATERIAL // packSize gesetzt (1/3/5), sizeId leer
+  KARTON // weder sizeId noch packSize
+}
+
 // Warenausgang ausserhalb des normalen Shopify-Verkaufs (z.B. Muster,
-// Geschenke, Ersatzlieferungen). Reduziert den losen Bestand (packSize null)
-// oder den Packungsbestand einer Grösse (packSize gesetzt) und wird optional
-// auch bei Shopify abgezogen, damit der dortige Bestand stimmt.
+// Geschenke, Ersatzlieferungen) – für Unterhosen (lose oder verpackt),
+// Verpackungsmaterial oder Versandkartons. Reduziert den jeweiligen lokalen
+// Bestand und wird bei verpackten Unterhosen optional auch bei Shopify
+// abgezogen, damit der dortige Bestand stimmt.
 model StockExit {
-  id              String   @id @default(cuid())
-  sizeId          String
-  size            Size     @relation(fields: [sizeId], references: [id])
-  packSize        Int? // null = lose Teile ausgetragen, sonst 1/3/5 = Anzahl Packungen
-  quantity        Int // Anzahl Packungen (wenn packSize gesetzt) oder lose Stück
+  id              String            @id @default(cuid())
+  itemType        StockExitItemType @default(UNTERHOSE)
+  sizeId          String?
+  size            Size?             @relation(fields: [sizeId], references: [id])
+  packSize        Int? // bei UNTERHOSE: null = lose Teile, sonst 1/3/5 = Anzahl Packungen; bei VERPACKUNGSMATERIAL: 1/3/5
+  quantity        Int // Anzahl Packungen (wenn packSize gesetzt), lose Stück oder Kartons
   reason          String
   recipient       String?
   date            DateTime // Datum des Austrags, frei wählbar (Standard: heute)

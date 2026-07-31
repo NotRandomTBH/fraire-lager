@@ -1,7 +1,8 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { defectItemLabel } from "@/lib/labels";
 
 type DefectRow = {
-  sizeLabel: string;
+  itemLabel: string;
   quantity: number;
   reasons: string[];
   note: string | null;
@@ -12,7 +13,7 @@ type DefectRow = {
 type Labels = {
   title: string;
   createdOn: (date: string) => string;
-  entryHeading: (index: number, size: string, quantity: number) => string;
+  entryHeading: (index: number, itemLabel: string, quantity: number) => string;
   date: string;
   reportedBy: string;
   defectType: string;
@@ -44,10 +45,19 @@ function translateReason(label: string): string {
   return REASON_PT[label] ?? label;
 }
 
+// Übersetzt das (schon fertig formatierte) itemLabel eines Eintrags
+// ("Grösse S", "Verpackung 3er", "Versandkarton") für die PT-Seite.
+function translateItemLabel(label: string): string {
+  if (label.startsWith("Grösse ")) return `Tamanho ${label.slice("Grösse ".length)}`;
+  if (label.startsWith("Verpackung ")) return `Embalagem ${label.slice("Verpackung ".length)}`;
+  if (label === "Versandkarton") return "Caixa de envio";
+  return label;
+}
+
 const LABELS_DE: Labels = {
   title: "Defekt-Protokoll — fraire",
   createdOn: (d: string) => `Erstellt am ${d}`,
-  entryHeading: (i, size, qty) => `${i}. Grösse ${size} — ${qty} Stück defekt`,
+  entryHeading: (i, itemLabel, qty) => `${i}. ${itemLabel} — ${qty} Stück defekt`,
   date: "Datum",
   reportedBy: "Erfasst von",
   defectType: "Defekt-Art",
@@ -59,7 +69,7 @@ const LABELS_DE: Labels = {
 const LABELS_PT: Labels = {
   title: "Relatório de Defeitos — fraire",
   createdOn: (d: string) => `Criado em ${d}`,
-  entryHeading: (i, size, qty) => `${i}. Tamanho ${size} — ${qty} peças com defeito`,
+  entryHeading: (i, itemLabel, qty) => `${i}. ${itemLabel} — ${qty} peças com defeito`,
   date: "Data",
   reportedBy: "Registado por",
   defectType: "Tipo de defeito",
@@ -134,7 +144,8 @@ function drawSection(
     newPageIfNeeded(90);
     totalQuantity += row.quantity;
 
-    drawText(labels.entryHeading(index + 1, row.sizeLabel, row.quantity), {
+    const itemLabel = translateReasons ? translateItemLabel(row.itemLabel) : row.itemLabel;
+    drawText(labels.entryHeading(index + 1, itemLabel, row.quantity), {
       size: 12,
       bold: true,
     });
@@ -186,7 +197,8 @@ export async function buildDefectReportsPdf(rows: DefectRow[]): Promise<Uint8Arr
 }
 
 type StockExitRow = {
-  sizeLabel: string;
+  itemType: string; // "UNTERHOSE" | "VERPACKUNGSMATERIAL" | "KARTON"
+  sizeLabel: string | null;
   packSize: number | null;
   quantity: number;
   reason: string;
@@ -194,6 +206,19 @@ type StockExitRow = {
   date: Date;
   createdBy: string | null;
 };
+
+function stockExitHeading(row: StockExitRow): string {
+  if (row.itemType === "VERPACKUNGSMATERIAL") {
+    return `Verpackungsmaterial ${row.packSize}er — ${row.quantity} Stück`;
+  }
+  if (row.itemType === "KARTON") {
+    return `Versandkarton — ${row.quantity} Stück`;
+  }
+  const packLabel = row.packSize
+    ? `${row.quantity} × ${row.packSize}er-Packung`
+    : `${row.quantity} Stück (lose)`;
+  return `Grösse ${row.sizeLabel ?? "?"} — ${packLabel}`;
+}
 
 export async function buildStockExitsPdf(rows: StockExitRow[]): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
@@ -234,11 +259,10 @@ export async function buildStockExitsPdf(rows: StockExitRow[]): Promise<Uint8Arr
   rows.forEach((row, index) => {
     newPageIfNeeded(90);
 
-    const units = row.packSize ? row.quantity * row.packSize : row.quantity;
+    const units = row.itemType === "UNTERHOSE" && row.packSize ? row.quantity * row.packSize : row.quantity;
     totalUnits += units;
-    const packLabel = row.packSize ? `${row.quantity} × ${row.packSize}er-Packung` : `${row.quantity} Stück (lose)`;
 
-    drawText(`${index + 1}. Grösse ${row.sizeLabel} — ${packLabel}`, { size: 12, bold: true });
+    drawText(`${index + 1}. ${stockExitHeading(row)}`, { size: 12, bold: true });
     drawText(
       `Datum: ${formatDate(row.date, "de-CH")}${row.createdBy ? `   ·   Ausgetragen von: ${row.createdBy}` : ""}`,
       { color: [0.35, 0.35, 0.35] },

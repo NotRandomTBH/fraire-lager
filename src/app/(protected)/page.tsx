@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getBestSellers, listPackagingStock, listSizesWithVariants } from "@/lib/inventory";
+import { getBestSellers, getCartonStock, listPackagingStock, listSizesWithVariants } from "@/lib/inventory";
 import { computeAllSizeForecasts, computePackagingForecast, worstStatus } from "@/lib/reorder";
 import { isShopifyConfigured, syncInventoryLevelsIfStale } from "@/lib/shopify";
 import { SyncPanel } from "@/components/SyncPanel";
@@ -16,11 +16,12 @@ function formatDays(days: number | null) {
 export default async function DashboardPage() {
   await syncInventoryLevelsIfStale();
 
-  const [sizes, bestSellers, packagingStock, sizeForecasts, packagingForecasts] =
+  const [sizes, bestSellers, packagingStock, cartonStock, sizeForecasts, packagingForecasts] =
     await Promise.all([
       listSizesWithVariants(),
       getBestSellers(30),
       listPackagingStock(),
+      getCartonStock(),
       computeAllSizeForecasts(),
       Promise.all([1, 3, 5].map((packSize) => computePackagingForecast(packSize))),
     ]);
@@ -160,6 +161,9 @@ export default async function DashboardPage() {
             </tbody>
           </table>
         </div>
+        <p className="mt-2 text-sm text-neutral-600">
+          Versandkartons: <strong>{cartonStock}</strong> Stück
+        </p>
       </section>
 
       <section>
@@ -186,12 +190,15 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      <div className="flex gap-3 text-sm">
-        <Link href="/wareneingang" className="rounded-md border border-neutral-300 px-4 py-2">
+      <div className="flex flex-wrap gap-3 text-sm">
+        <Link href="/wareneingang/unterhosen" className="rounded-md border border-neutral-300 px-4 py-2">
           Wareneingang buchen
         </Link>
         <Link href="/verpacken" className="rounded-md border border-neutral-300 px-4 py-2">
           Packung verpacken
+        </Link>
+        <Link href="/warenausgang" className="rounded-md border border-neutral-300 px-4 py-2">
+          Warenausgang buchen
         </Link>
         <Link href="/analytics" className="rounded-md border border-neutral-300 px-4 py-2">
           Analytics
