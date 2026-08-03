@@ -214,6 +214,9 @@ function stockExitHeading(row: StockExitRow): string {
   if (row.itemType === "KARTON") {
     return `Versandkarton — ${row.quantity} Stück`;
   }
+  if (row.itemType === "SHOPIFY") {
+    return `Shopify-Bestand Grösse ${row.sizeLabel ?? "?"} (${row.packSize}er) — ${row.quantity} Stück`;
+  }
   const packLabel = row.packSize
     ? `${row.quantity} × ${row.packSize}er-Packung`
     : `${row.quantity} Stück (lose)`;

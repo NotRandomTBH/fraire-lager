@@ -21,5 +21,6 @@ export function stockExitItemLabel(input: {
   if (input.itemType === "VERPACKUNGSMATERIAL") return `Verpackungsmaterial ${input.packSize}er`;
   if (input.itemType === "KARTON") return "Versandkarton";
   const size = input.size?.label ?? "?";
+  if (input.itemType === "SHOPIFY") return `Shopify-Bestand Grösse ${size} (${input.packSize}er)`;
   return input.packSize ? `Grösse ${size} (${input.packSize}er-Packung)` : `Grösse ${size} (lose)`;
 }

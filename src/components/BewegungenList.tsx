@@ -25,6 +25,7 @@ const CATEGORY_BADGE: Record<string, string> = {
   Verpackung: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400",
   Karton: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400",
   "Maxims Lager": "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300",
+  Shopify: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400",
 };
 
 function formatMovementDate(m: UnifiedMovement) {

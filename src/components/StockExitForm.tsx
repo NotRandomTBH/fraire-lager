@@ -14,7 +14,7 @@ type SizeWithVariants = {
   shopifyVariants: { packSize: number; packStock: number; shopifyVariantId: string }[];
 };
 
-type ItemType = "UNTERHOSE" | "VERPACKUNGSMATERIAL" | "KARTON";
+type ItemType = "UNTERHOSE" | "VERPACKUNGSMATERIAL" | "KARTON" | "SHOPIFY";
 
 type ExitItem = {
   itemType: ItemType;
@@ -54,10 +54,11 @@ export function StockExitForm({
       ? cartonStock
       : itemType === "VERPACKUNGSMATERIAL"
         ? (material?.quantity ?? 0)
-        : packed
+        : itemType === "SHOPIFY" || packed
           ? (variant?.packStock ?? 0)
           : (size?.looseStock ?? 0);
   const remaining = available - quantity;
+  const variantLinked = Boolean(variant?.shopifyVariantId);
 
   function currentItem(): ExitItem {
     if (itemType === "KARTON") {
@@ -65,6 +66,9 @@ export function StockExitForm({
     }
     if (itemType === "VERPACKUNGSMATERIAL") {
       return { itemType, sizeId: null, sizeLabel: null, packSize: materialPackSize, quantity };
+    }
+    if (itemType === "SHOPIFY") {
+      return { itemType, sizeId, sizeLabel: size?.label ?? null, packSize, quantity };
     }
     return {
       itemType,
@@ -113,6 +117,9 @@ export function StockExitForm({
           <option value="UNTERHOSE">Unterhosen</option>
           <option value="VERPACKUNGSMATERIAL">Verpackungsmaterial</option>
           <option value="KARTON">Versandkartons</option>
+          {shopifyConfigured && (
+            <option value="SHOPIFY">Shopify-Bestand (nur online, kein Lagerabzug)</option>
+          )}
         </select>
       </div>
 
@@ -178,9 +185,49 @@ export function StockExitForm({
         </div>
       )}
 
+      {itemType === "SHOPIFY" && (
+        <>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Reduziert nur den Shopify-Bestand der Variante, nicht das Hauptlager – z.B. für eine
+            Korrektur mit Begründung, ohne den Umweg über Einstellungen.
+          </p>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Grösse</label>
+            <select
+              value={sizeId}
+              onChange={(e) => setSizeId(e.target.value)}
+              className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
+            >
+              {sizes.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Packungsgrösse</label>
+            <select
+              value={packSize}
+              onChange={(e) => setPackSize(Number(e.target.value))}
+              className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
+            >
+              <option value={1}>1er</option>
+              <option value={3}>3er</option>
+              <option value={5}>5er</option>
+            </select>
+          </div>
+          {!variantLinked && (
+            <p className="text-sm text-amber-700 dark:text-amber-400">
+              Diese Grösse/Packgrösse-Kombination ist nicht mit Shopify verknüpft (Einstellungen).
+            </p>
+          )}
+        </>
+      )}
+
       <div>
         <label className="mb-1 block text-sm font-medium">
-          Anzahl {itemType === "UNTERHOSE" && packed ? "Packungen" : "Stück"}
+          Anzahl {(itemType === "UNTERHOSE" && packed) || itemType === "SHOPIFY" ? "Packungen" : "Stück"}
         </label>
         <input
           type="number"

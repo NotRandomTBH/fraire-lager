@@ -512,11 +512,12 @@ export async function getBestSellers(days = 30) {
   }));
 }
 
-export type StockExitItemType = "UNTERHOSE" | "VERPACKUNGSMATERIAL" | "KARTON";
+export type StockExitItemType = "UNTERHOSE" | "VERPACKUNGSMATERIAL" | "KARTON" | "SHOPIFY";
 
 // Warenausgang ausserhalb des normalen Shopify-Verkaufs (Muster, Geschenke,
 // Ersatzlieferungen, ...) – für Unterhosen (lose oder verpackt),
-// Verpackungsmaterial oder Versandkartons. Reduziert jeweils den passenden
+// Verpackungsmaterial, Versandkartons oder direkt den Shopify-Bestand einer
+// Variante (ohne das Hauptlager anzurühren). Reduziert jeweils den passenden
 // lokalen Bestand und bei verpackten Unterhosen optional auch den echten
 // Shopify-Bestand.
 export async function recordStockExit(input: {
@@ -596,6 +597,54 @@ export async function recordStockExit(input: {
         },
       }),
     ]);
+    return;
+  }
+
+  if (itemType === "SHOPIFY") {
+    if (!input.sizeId || !input.packSize) {
+      throw new Error("Grösse und Packgrösse sind erforderlich.");
+    }
+    if (!isShopifyConfigured()) {
+      throw new Error("Shopify ist nicht konfiguriert.");
+    }
+    const variant = await prisma.shopifyVariant.findUnique({
+      where: { sizeId_packSize: { sizeId: input.sizeId, packSize: input.packSize } },
+      include: { size: true },
+    });
+    if (!variant?.shopifyInventoryItemId) {
+      throw new Error("Diese Grösse/Packgrösse-Kombination ist nicht mit Shopify verknüpft.");
+    }
+    if (variant.packStock < input.quantity) {
+      throw new Error(
+        `Nicht genug ${input.packSize}er-Packungen im Shopify-Bestand: ${variant.packStock} vorhanden, ${input.quantity} benötigt.`,
+      );
+    }
+    const config = await prisma.shopifyConfig.findUnique({ where: { id: "singleton" } });
+    if (!config?.locationId) {
+      throw new Error("Keine Shopify-Location konfiguriert (Einstellungen).");
+    }
+
+    await prisma.$transaction([
+      prisma.shopifyVariant.update({
+        where: { id: variant.id },
+        data: { packStock: { decrement: input.quantity } },
+      }),
+      prisma.stockExit.create({
+        data: {
+          itemType: "SHOPIFY",
+          sizeId: input.sizeId,
+          packSize: input.packSize,
+          quantity: input.quantity,
+          reason,
+          recipient: input.recipient,
+          date: input.date,
+          createdBy: input.createdBy,
+          pushedToShopify: true,
+        },
+      }),
+    ]);
+
+    await adjustInventory(variant.shopifyInventoryItemId, config.locationId, -input.quantity);
     return;
   }
 
@@ -735,7 +784,7 @@ export type UnifiedMovement = {
   id: string;
   date: Date;
   dateOnly: boolean; // true = date trägt keine echte Uhrzeit (frei gewähltes Datum, z.B. Austrag), keine Uhrzeit anzeigen
-  category: "Unterhosen" | "Verpackung" | "Karton" | "Maxims Lager";
+  category: "Unterhosen" | "Verpackung" | "Karton" | "Maxims Lager" | "Shopify";
   typeLabel: string;
   quantityDelta: number;
   details: string;
@@ -795,7 +844,13 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
       date: e.date,
       dateOnly: true,
       category:
-        e.itemType === "VERPACKUNGSMATERIAL" ? "Verpackung" : e.itemType === "KARTON" ? "Karton" : "Unterhosen",
+        e.itemType === "VERPACKUNGSMATERIAL"
+          ? "Verpackung"
+          : e.itemType === "KARTON"
+            ? "Karton"
+            : e.itemType === "SHOPIFY"
+              ? "Shopify"
+              : "Unterhosen",
       typeLabel: "Austrag",
       quantityDelta: -e.quantity,
       details: `${label} · ${e.reason}${e.recipient ? ` · ${e.recipient}` : ""}`,

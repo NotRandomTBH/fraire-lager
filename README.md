@@ -43,6 +43,9 @@ Lager), **Bewegungen**, **Defekte**, **Statistik**, **Analytics** und
   Unterhosen optional auch den echten Shopify-Bestand. Mehrere Positionen
   (auch unterschiedlicher Art) lassen sich vor dem Buchen sammeln und mit
   einer gemeinsamen Begründung/Empfänger/Datum als eine Buchung austragen.
+  Zusätzliche Option "Shopify-Bestand": reduziert mit Begründung nur den
+  echten Shopify-Bestand einer Grösse/Packgrösse-Kombination, ohne das
+  Hauptlager anzurühren.
 - **Maxims Lager**: zweites, kleineres Lager mit eigenem Bestand an losen
   Teilen (pro Grösse) und Verpackungsmaterial (pro Packgrösse), befüllt durch
   Übernahme vom Hauptlager (reduziert dort automatisch den Bestand). Von dort
