@@ -8,8 +8,8 @@ verpackt werden. Mit Nachbestell-Alerts und optionalem Shopify-Abgleich
 ## Was die App macht
 
 Die Navigation ist in **Dashboard**, das Dropdown-Menü **Lager** (Wareneingang
-Unterhosen/Verpackung, Warenausgang, Verpacken, Defekte erfassen),
-**Bewegungen**, **Defekte**, **Statistik**, **Analytics** und
+Unterhosen/Verpackung, Warenausgang, Verpacken, Defekte erfassen, Maxims
+Lager), **Bewegungen**, **Defekte**, **Statistik**, **Analytics** und
 **Einstellungen** gegliedert.
 
 - **Wareneingang Unterhosen**: neue lose Einzelteile pro Grösse einbuchen.
@@ -41,8 +41,19 @@ Unterhosen/Verpackung, Warenausgang, Verpacken, Defekte erfassen),
   Geschenke, Ersatzlieferungen, Verschleiss, ...) – mit Begründung, Empfänger
   und Datum. Reduziert den jeweiligen Bestand sofort; bei verpackten
   Unterhosen optional auch den echten Shopify-Bestand.
+- **Maxims Lager**: zweites, kleineres Lager mit eigenem Bestand an losen
+  Teilen (pro Grösse) und Verpackungsmaterial (pro Packgrösse), befüllt durch
+  Übernahme vom Hauptlager (reduziert dort automatisch den Bestand). Von dort
+  aus lässt sich eine Bestellung direkt verpacken & verschicken (Grösse +
+  Packgrösse + Menge + Empfänger + Datum) – das verbraucht lose Teile und
+  Verpackungsmaterial aus Maxims Lager und erhöht, falls die Kombination mit
+  Shopify verknüpft ist, automatisch den Shopify-Bestand der Variante um die
+  verkaufte Menge. Hintergrund: Shopify zieht bei Bestelleingang automatisch
+  ab, aber wenn dann aus Maxims statt dem Hauptlager verschickt wird, hat das
+  Hauptlager nichts hergegeben – die Erhöhung gleicht das aus. Inkl.
+  Bestandskorrektur für Inventuren.
 - **Bewegungen**: vereinheitlichtes Protokoll aller Bestandsbewegungen
-  (Wareneingang, Verpackt, Korrektur, Austrag) über Unterhosen,
+  (Wareneingang, Verpackt, Korrektur, Austrag, Maxims Lager) über Unterhosen,
   Verpackungsmaterial und Versandkartons hinweg. Austräge lassen sich darin
   auswählen und als PDF exportieren.
 - **Dashboard**: aktueller Bestand pro Grösse, automatische Nachbestell-Ampel

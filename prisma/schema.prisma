@@ -45,6 +45,9 @@ model Size {
   defectReports   DefectReport[]
   dailySales      DailySales[]
   stockExits      StockExit[]
+  maxLagerStock     MaxLagerStock?
+  maxLagerMovements MaxLagerMovement[]
+  maxLagerSales     MaxLagerSale[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -54,6 +57,7 @@ enum MovementType {
   RECEIVE // Wareneingang von losen Einzelteilen
   PACK // lose Einzelteile wurden zu Packungen verpackt (Abgang)
   ADJUST // manuelle Korrektur (z.B. Inventur)
+  TRANSFER_OUT // an ein Nebenlager (z.B. Maxims Lager) übergeben
 }
 
 // Jede Bestandsänderung an losen Einzelteilen wird protokolliert.
@@ -191,6 +195,7 @@ enum PackagingMovementType {
   USED // beim Verpacken verbraucht (egal welche Unterhosen-Grösse)
   EXIT // manueller Austrag (Warenausgang), nicht durchs Verpacken
   ADJUST // Inventurkorrektur auf einen tatsächlich gezählten Bestand
+  TRANSFER_OUT // an ein Nebenlager (z.B. Maxims Lager) übergeben
 }
 
 model PackagingMovement {
@@ -276,4 +281,74 @@ model ReorderSettings {
   leadTimeDays       Int    @default(80) // offizielle Lieferzeit + Puffer für Verzögerungen
   safetyBufferDays   Int    @default(14)
   warningWindowDays  Int    @default(30) // ab wann die Ampel auf Gelb springt
+}
+
+// Zweites, kleineres Lager (bei Maxim), das mit losen Teilen und
+// Verpackungsmaterial vom Hauptlager befüllt wird und von dem aus direkt
+// verpackt & verschickt werden kann – z.B. für Bestellungen, die nicht vom
+// Hauptlager aus versendet werden.
+model MaxLagerStock {
+  id       String @id @default(cuid())
+  sizeId   String @unique
+  size     Size   @relation(fields: [sizeId], references: [id])
+  quantity Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum MaxLagerMovementType {
+  TRANSFER_IN // vom Hauptlager übernommen
+  SALE // beim Verkauf/Versand aus Maxims Lager verbraucht
+  ADJUST // Inventurkorrektur auf einen tatsächlich gezählten Bestand
+}
+
+model MaxLagerMovement {
+  id            String               @id @default(cuid())
+  sizeId        String
+  size          Size                 @relation(fields: [sizeId], references: [id])
+  type          MaxLagerMovementType
+  quantityDelta Int
+  note          String?
+  createdBy     String?
+  createdAt     DateTime             @default(now())
+}
+
+model MaxLagerPackagingStock {
+  id       String @id @default(cuid())
+  packSize Int    @unique // 1, 3 oder 5
+  quantity Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MaxLagerPackagingMovement {
+  id            String               @id @default(cuid())
+  packSize      Int
+  type          MaxLagerMovementType
+  quantityDelta Int
+  note          String?
+  createdBy     String?
+  createdAt     DateTime             @default(now())
+}
+
+// Ein Verkauf/Versand direkt aus Maxims Lager (z.B. eine Bestellung, die
+// nicht vom Hauptlager aus verschickt wird). Verbraucht lose Teile und das
+// passende Verpackungsmaterial aus Maxims Lager und erhöht im Gegenzug den
+// Shopify-Bestand der Variante um die versandte Menge – weil Shopify beim
+// Bestelleingang bereits automatisch reduziert hat, ohne dass das
+// Hauptlager dafür etwas hergegeben hat.
+model MaxLagerSale {
+  id              String   @id @default(cuid())
+  sizeId          String
+  size            Size     @relation(fields: [sizeId], references: [id])
+  packSize        Int // 1, 3 oder 5
+  quantity        Int // Anzahl Packungen
+  recipient       String?
+  note            String?
+  date            DateTime // Datum des Verkaufs, frei wählbar (Standard: heute)
+  pushedToShopify Boolean  @default(false)
+  createdBy       String?
+  createdAt       DateTime @default(now())
 }

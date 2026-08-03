@@ -30,6 +30,13 @@ import {
   type StockExitItemType,
 } from "@/lib/inventory";
 import { defectItemLabel } from "@/lib/labels";
+import {
+  adjustMaxLagerPackagingStock,
+  adjustMaxLagerStock,
+  recordMaxLagerSale,
+  transferLooseToMaxLager,
+  transferPackagingToMaxLager,
+} from "@/lib/maxlager";
 import { buildDefectReportsPdf, buildStockExitsPdf } from "@/lib/pdf";
 import { updateReorderSettings } from "@/lib/reorder";
 import {
@@ -564,6 +571,113 @@ export async function syncShopifyAction(
     revalidatePath("/statistik");
     revalidatePath("/analytics");
     return { ok: true, message: `Sync abgeschlossen (${count} Tages-Einträge aktualisiert).` };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function transferLooseToMaxLagerAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    await transferLooseToMaxLager({
+      sizeId: String(formData.get("sizeId")),
+      quantity: Number(formData.get("quantity")),
+      createdBy: user.name,
+    });
+    revalidatePath("/maxims-lager");
+    revalidatePath("/wareneingang/unterhosen");
+    revalidatePath("/bewegungen");
+    revalidatePath("/");
+    return { ok: true, message: "Übernommen." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function transferPackagingToMaxLagerAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    await transferPackagingToMaxLager({
+      packSize: Number(formData.get("packSize")),
+      quantity: Number(formData.get("quantity")),
+      createdBy: user.name,
+    });
+    revalidatePath("/maxims-lager");
+    revalidatePath("/wareneingang/verpackung");
+    revalidatePath("/bewegungen");
+    revalidatePath("/");
+    return { ok: true, message: "Übernommen." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function adjustMaxLagerStockAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    await adjustMaxLagerStock({
+      sizeId: String(formData.get("sizeId")),
+      newQuantity: Number(formData.get("newQuantity")),
+      note: String(formData.get("note") ?? "") || undefined,
+      createdBy: user.name,
+    });
+    revalidatePath("/maxims-lager");
+    revalidatePath("/bewegungen");
+    return { ok: true, message: "Korrektur gebucht." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function adjustMaxLagerPackagingStockAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    await adjustMaxLagerPackagingStock({
+      packSize: Number(formData.get("packSize")),
+      newQuantity: Number(formData.get("newQuantity")),
+      note: String(formData.get("note") ?? "") || undefined,
+      createdBy: user.name,
+    });
+    revalidatePath("/maxims-lager");
+    revalidatePath("/bewegungen");
+    return { ok: true, message: "Korrektur gebucht." };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function recordMaxLagerSaleAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    const dateRaw = String(formData.get("date") ?? "");
+    await recordMaxLagerSale({
+      sizeId: String(formData.get("sizeId")),
+      packSize: Number(formData.get("packSize")),
+      quantity: Number(formData.get("quantity")),
+      recipient: String(formData.get("recipient") ?? "") || undefined,
+      note: String(formData.get("note") ?? "") || undefined,
+      date: dateRaw ? new Date(dateRaw) : new Date(),
+      createdBy: user.name,
+    });
+    revalidatePath("/maxims-lager");
+    revalidatePath("/bewegungen");
+    revalidatePath("/");
+    return { ok: true, message: "Verkauf gebucht." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
   }

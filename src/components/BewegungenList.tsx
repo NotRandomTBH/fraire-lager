@@ -22,6 +22,7 @@ const CATEGORY_BADGE: Record<string, string> = {
   Unterhosen: "bg-neutral-100 text-neutral-700",
   Verpackung: "bg-blue-100 text-blue-700",
   Karton: "bg-purple-100 text-purple-700",
+  "Maxims Lager": "bg-amber-100 text-amber-800",
 };
 
 export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) {

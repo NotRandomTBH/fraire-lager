@@ -10,6 +10,7 @@ const LAGER_ITEMS = [
   { href: "/warenausgang", label: "Warenausgang" },
   { href: "/verpacken", label: "Verpacken" },
   { href: "/defekte-erfassen", label: "Defekte erfassen" },
+  { href: "/maxims-lager", label: "Maxims Lager" },
 ];
 
 const REST_NAV_ITEMS = [

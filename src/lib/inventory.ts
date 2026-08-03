@@ -696,6 +696,7 @@ const MOVEMENT_TYPE_LABEL: Record<string, string> = {
   RECEIVE: "Wareneingang",
   PACK: "Verpackt",
   ADJUST: "Korrektur",
+  TRANSFER_OUT: "Übernahme (Maxims Lager)",
 };
 
 const PACKAGING_TYPE_LABEL: Record<string, string> = {
@@ -703,6 +704,7 @@ const PACKAGING_TYPE_LABEL: Record<string, string> = {
   USED: "Verpackt (verbraucht)",
   EXIT: "Austrag",
   ADJUST: "Korrektur",
+  TRANSFER_OUT: "Übernahme (Maxims Lager)",
 };
 
 const CARTON_TYPE_LABEL: Record<string, string> = {
@@ -711,10 +713,16 @@ const CARTON_TYPE_LABEL: Record<string, string> = {
   ADJUST: "Korrektur",
 };
 
+const MAXLAGER_TYPE_LABEL: Record<string, string> = {
+  TRANSFER_IN: "Übernahme vom Hauptlager",
+  SALE: "Verkauf",
+  ADJUST: "Korrektur",
+};
+
 export type UnifiedMovement = {
   id: string;
   date: Date;
-  category: "Unterhosen" | "Verpackung" | "Karton";
+  category: "Unterhosen" | "Verpackung" | "Karton" | "Maxims Lager";
   typeLabel: string;
   quantityDelta: number;
   details: string;
@@ -726,11 +734,22 @@ export type UnifiedMovement = {
 // (StockExit) sowie Verpackungsmaterial- und Karton-Bewegungen zu einem
 // einzigen chronologischen Bewegungsprotokoll ("Bewegungen").
 export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> {
-  const [stockMovements, stockExits, packagingMovements, cartonMovements] = await Promise.all([
+  const [
+    stockMovements,
+    stockExits,
+    packagingMovements,
+    cartonMovements,
+    maxLagerMovements,
+    maxLagerPackagingMovements,
+    maxLagerSales,
+  ] = await Promise.all([
     prisma.stockMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit, include: { size: true } }),
     prisma.stockExit.findMany({ orderBy: { date: "desc" }, take: limit, include: { size: true } }),
     prisma.packagingMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit }),
     prisma.cartonMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit }),
+    prisma.maxLagerMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit, include: { size: true } }),
+    prisma.maxLagerPackagingMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit }),
+    prisma.maxLagerSale.findMany({ orderBy: { date: "desc" }, take: limit, include: { size: true } }),
   ]);
 
   const unified: UnifiedMovement[] = [];
@@ -786,6 +805,44 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
       quantityDelta: c.quantityDelta,
       details: c.note ?? "",
       createdBy: c.createdBy,
+    });
+  }
+
+  for (const m of maxLagerMovements) {
+    unified.push({
+      id: `maxlager-stock-${m.id}`,
+      date: m.createdAt,
+      category: "Maxims Lager",
+      typeLabel: MAXLAGER_TYPE_LABEL[m.type] ?? m.type,
+      quantityDelta: m.quantityDelta,
+      details: `${m.size.label} (lose)${m.note ? `: ${m.note}` : ""}`,
+      createdBy: m.createdBy,
+    });
+  }
+
+  for (const p of maxLagerPackagingMovements) {
+    unified.push({
+      id: `maxlager-packaging-${p.id}`,
+      date: p.createdAt,
+      category: "Maxims Lager",
+      typeLabel: MAXLAGER_TYPE_LABEL[p.type] ?? p.type,
+      quantityDelta: p.quantityDelta,
+      details: `${p.packSize}er Verpackung${p.note ? `: ${p.note}` : ""}`,
+      createdBy: p.createdBy,
+    });
+  }
+
+  for (const s of maxLagerSales) {
+    unified.push({
+      id: `maxlager-sale-${s.id}`,
+      date: s.date,
+      category: "Maxims Lager",
+      typeLabel: "Verkauf",
+      quantityDelta: -(s.packSize * s.quantity),
+      details: `Grösse ${s.size.label} (${s.packSize}er-Packung)${s.recipient ? ` · ${s.recipient}` : ""}${
+        s.pushedToShopify ? " · Shopify +" + s.quantity : ""
+      }`,
+      createdBy: s.createdBy,
     });
   }
 
