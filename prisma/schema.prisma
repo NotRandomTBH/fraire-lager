@@ -273,6 +273,19 @@ model StockExit {
   pushedToShopify Boolean  @default(false)
   createdBy       String?
   createdAt       DateTime @default(now())
+
+  notes StockExitNote[]
+}
+
+// Nachträgliche Bemerkung zu einem Austrag – rein additiv, kein Audit-Trail
+// nötig, da bestehende Felder eines Austrags nicht editierbar sind.
+model StockExitNote {
+  id          String    @id @default(cuid())
+  stockExitId String
+  stockExit   StockExit @relation(fields: [stockExitId], references: [id], onDelete: Cascade)
+  text        String
+  createdBy   String?
+  createdAt   DateTime  @default(now())
 }
 
 // Globale Parameter für die automatische Bestellpunkt-Berechnung.

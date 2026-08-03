@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { generateStockExitsPdfAction } from "@/app/actions";
+import { Fragment, useState } from "react";
+import { addStockExitNoteAction, generateStockExitsPdfAction } from "@/app/actions";
+import { ActionForm } from "@/components/ActionForm";
+import { SubmitButton } from "@/components/SubmitButton";
 import type { UnifiedMovement } from "@/lib/inventory";
 
 function downloadBase64Pdf(base64: string, filename: string) {
@@ -25,10 +27,15 @@ const CATEGORY_BADGE: Record<string, string> = {
   "Maxims Lager": "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300",
 };
 
+function formatMovementDate(m: UnifiedMovement) {
+  return m.dateOnly ? m.date.toLocaleDateString("de-CH") : m.date.toLocaleString("de-CH");
+}
+
 export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const exitIds = movements.filter((m) => m.exitId).map((m) => m.exitId as string);
 
@@ -43,6 +50,15 @@ export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) 
 
   function toggleAll() {
     setSelected((prev) => (prev.size === exitIds.length ? new Set() : new Set(exitIds)));
+  }
+
+  function toggleExpanded(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   async function handleExport() {
@@ -99,41 +115,89 @@ export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) 
               <th className="px-3 py-2">Menge</th>
               <th className="px-3 py-2">Details</th>
               <th className="px-3 py-2">Von</th>
+              <th className="px-3 py-2"></th>
             </tr>
           </thead>
           <tbody>
-            {movements.map((m) => (
-              <tr key={m.id} className="border-t border-neutral-100 dark:border-neutral-800">
-                <td className="px-3 py-2">
-                  {m.exitId && (
-                    <input
-                      type="checkbox"
-                      checked={selected.has(m.exitId)}
-                      onChange={() => toggle(m.exitId as string)}
-                    />
+            {movements.map((m) => {
+              const isExpanded = expanded.has(m.id);
+              return (
+                <Fragment key={m.id}>
+                  <tr className="border-t border-neutral-100 dark:border-neutral-800">
+                    <td className="px-3 py-2">
+                      {m.exitId && (
+                        <input
+                          type="checkbox"
+                          checked={selected.has(m.exitId)}
+                          onChange={() => toggle(m.exitId as string)}
+                        />
+                      )}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-neutral-500 dark:text-neutral-400">
+                      {formatMovementDate(m)}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${CATEGORY_BADGE[m.category] ?? "bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"}`}
+                      >
+                        {m.category}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">{m.typeLabel}</td>
+                    <td
+                      className={`px-3 py-2 ${m.quantityDelta < 0 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400"}`}
+                    >
+                      {m.quantityDelta > 0 ? "+" : ""}
+                      {m.quantityDelta}
+                    </td>
+                    <td className="px-3 py-2 text-neutral-500 dark:text-neutral-400">{m.details}</td>
+                    <td className="px-3 py-2 text-neutral-500 dark:text-neutral-400">{m.createdBy ?? "–"}</td>
+                    <td className="px-3 py-2 text-right">
+                      {m.exitId && (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpanded(m.id)}
+                          className="text-xs text-neutral-400 dark:text-neutral-500 underline hover:text-neutral-700 dark:hover:text-neutral-300"
+                        >
+                          {isExpanded ? "schliessen" : `Notiz${m.notes && m.notes.length > 0 ? ` (${m.notes.length})` : ""}`}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                  {m.exitId && isExpanded && (
+                    <tr className="border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950">
+                      <td></td>
+                      <td colSpan={7} className="px-3 py-3">
+                        {m.notes && m.notes.length > 0 && (
+                          <ul className="mb-3 space-y-1">
+                            {m.notes.map((n) => (
+                              <li key={n.id} className="text-sm text-neutral-600 dark:text-neutral-400">
+                                <span className="text-neutral-400 dark:text-neutral-500">
+                                  {n.createdAt.toLocaleString("de-CH")}
+                                  {n.createdBy && ` · ${n.createdBy}`}:
+                                </span>{" "}
+                                {n.text}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <ActionForm action={addStockExitNoteAction} resetOnSuccess className="flex gap-2">
+                          <input type="hidden" name="stockExitId" value={m.exitId} />
+                          <input
+                            type="text"
+                            name="text"
+                            required
+                            placeholder="Notiz hinzufügen…"
+                            className="flex-1 rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm"
+                          />
+                          <SubmitButton className="!px-3 !py-1.5 !text-xs">Speichern</SubmitButton>
+                        </ActionForm>
+                      </td>
+                    </tr>
                   )}
-                </td>
-                <td className="px-3 py-2 whitespace-nowrap text-neutral-500 dark:text-neutral-400">
-                  {m.date.toLocaleString("de-CH")}
-                </td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${CATEGORY_BADGE[m.category] ?? "bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"}`}
-                  >
-                    {m.category}
-                  </span>
-                </td>
-                <td className="px-3 py-2">{m.typeLabel}</td>
-                <td
-                  className={`px-3 py-2 ${m.quantityDelta < 0 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400"}`}
-                >
-                  {m.quantityDelta > 0 ? "+" : ""}
-                  {m.quantityDelta}
-                </td>
-                <td className="px-3 py-2 text-neutral-500 dark:text-neutral-400">{m.details}</td>
-                <td className="px-3 py-2 text-neutral-500 dark:text-neutral-400">{m.createdBy ?? "–"}</td>
-              </tr>
-            ))}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -12,6 +12,7 @@ import {
 import {
   addDefectNote,
   addDefectPhotos,
+  addStockExitNote,
   adjustCartonStock,
   adjustLooseStock,
   adjustPackagingStock,
@@ -29,6 +30,7 @@ import {
   type DefectItemType,
   type StockExitItemType,
 } from "@/lib/inventory";
+import { parseDateOnlyInput } from "@/lib/date";
 import { defectItemLabel } from "@/lib/labels";
 import {
   adjustMaxLagerPackagingStock,
@@ -231,27 +233,73 @@ export async function recordStockExitAction(
 ): Promise<ActionState> {
   try {
     const user = await requireUser();
-    const itemType = (String(formData.get("itemType") ?? "UNTERHOSE") as StockExitItemType);
-    const sizeIdRaw = String(formData.get("sizeId") ?? "");
-    const packSizeRaw = String(formData.get("packSize") ?? "");
-    const dateRaw = String(formData.get("date") ?? "");
+    const itemsRaw = String(formData.get("items") ?? "[]");
+    let items: {
+      itemType: StockExitItemType;
+      sizeId: string | null;
+      packSize: number | null;
+      quantity: number;
+    }[] = [];
+    try {
+      items = JSON.parse(itemsRaw);
+    } catch {
+      items = [];
+    }
+    if (items.length === 0) {
+      throw new Error("Keine Position zum Austragen.");
+    }
 
-    await recordStockExit({
-      itemType,
-      sizeId: sizeIdRaw || null,
-      packSize: packSizeRaw ? Number(packSizeRaw) : null,
-      quantity: Number(formData.get("quantity")),
-      reason: String(formData.get("reason") ?? ""),
-      recipient: String(formData.get("recipient") ?? "") || undefined,
-      date: dateRaw ? new Date(dateRaw) : new Date(),
-      createdBy: user.name,
-      pushToShopify: formData.get("pushToShopify") === "on",
-    });
+    const reason = String(formData.get("reason") ?? "");
+    const recipient = String(formData.get("recipient") ?? "") || undefined;
+    const dateRaw = String(formData.get("date") ?? "");
+    const date = dateRaw ? parseDateOnlyInput(dateRaw) : new Date();
+    const pushToShopify = formData.get("pushToShopify") === "on";
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      try {
+        await recordStockExit({
+          itemType: item.itemType,
+          sizeId: item.sizeId,
+          packSize: item.packSize,
+          quantity: item.quantity,
+          reason,
+          recipient,
+          date,
+          createdBy: user.name,
+          pushToShopify,
+        });
+      } catch (e) {
+        const doneMsg = i > 0 ? ` ${i} vorherige Position(en) wurden bereits gebucht.` : "";
+        throw new Error(`Position ${i + 1} von ${items.length}: ${(e as Error).message}${doneMsg}`);
+      }
+    }
 
     revalidatePath("/");
     revalidatePath("/warenausgang");
     revalidatePath("/bewegungen");
-    return { ok: true, message: "Austrag gebucht." };
+    return {
+      ok: true,
+      message: items.length === 1 ? "Austrag gebucht." : `${items.length} Austräge gebucht.`,
+    };
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+}
+
+export async function addStockExitNoteAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const user = await requireUser();
+    await addStockExitNote({
+      stockExitId: String(formData.get("stockExitId")),
+      text: String(formData.get("text") ?? ""),
+      createdBy: user.name,
+    });
+    revalidatePath("/bewegungen");
+    return { ok: true, message: "Notiz hinzugefügt." };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
   }
@@ -671,7 +719,7 @@ export async function recordMaxLagerSaleAction(
       quantity: Number(formData.get("quantity")),
       recipient: String(formData.get("recipient") ?? "") || undefined,
       note: String(formData.get("note") ?? "") || undefined,
-      date: dateRaw ? new Date(dateRaw) : new Date(),
+      date: dateRaw ? parseDateOnlyInput(dateRaw) : new Date(),
       createdBy: user.name,
     });
     revalidatePath("/maxims-lager");

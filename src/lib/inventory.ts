@@ -692,6 +692,18 @@ export async function getStockExitsForExport(ids: string[]) {
   });
 }
 
+export async function addStockExitNote(input: {
+  stockExitId: string;
+  text: string;
+  createdBy?: string;
+}) {
+  const text = input.text.trim();
+  if (!text) throw new Error("Notiz darf nicht leer sein.");
+  await prisma.stockExitNote.create({
+    data: { stockExitId: input.stockExitId, text, createdBy: input.createdBy },
+  });
+}
+
 const MOVEMENT_TYPE_LABEL: Record<string, string> = {
   RECEIVE: "Wareneingang",
   PACK: "Verpackt",
@@ -722,12 +734,14 @@ const MAXLAGER_TYPE_LABEL: Record<string, string> = {
 export type UnifiedMovement = {
   id: string;
   date: Date;
+  dateOnly: boolean; // true = date trägt keine echte Uhrzeit (frei gewähltes Datum, z.B. Austrag), keine Uhrzeit anzeigen
   category: "Unterhosen" | "Verpackung" | "Karton" | "Maxims Lager";
   typeLabel: string;
   quantityDelta: number;
   details: string;
   createdBy: string | null;
   exitId?: string; // nur bei Austrägen gesetzt (für PDF-Export-Auswahl)
+  notes?: { id: string; text: string; createdBy: string | null; createdAt: Date }[];
 };
 
 // Vereinigt Wareneingang/Verpackt/Korrektur (StockMovement), Austräge
@@ -744,7 +758,11 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
     maxLagerSales,
   ] = await Promise.all([
     prisma.stockMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit, include: { size: true } }),
-    prisma.stockExit.findMany({ orderBy: { date: "desc" }, take: limit, include: { size: true } }),
+    prisma.stockExit.findMany({
+      orderBy: { date: "desc" },
+      take: limit,
+      include: { size: true, notes: { orderBy: { createdAt: "asc" } } },
+    }),
     prisma.packagingMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit }),
     prisma.cartonMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit }),
     prisma.maxLagerMovement.findMany({ orderBy: { createdAt: "desc" }, take: limit, include: { size: true } }),
@@ -758,6 +776,7 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
     unified.push({
       id: `stock-${m.id}`,
       date: m.createdAt,
+      dateOnly: false,
       category: "Unterhosen",
       typeLabel: MOVEMENT_TYPE_LABEL[m.type] ?? m.type,
       quantityDelta: m.quantityDelta,
@@ -774,6 +793,7 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
     unified.push({
       id: `exit-${e.id}`,
       date: e.date,
+      dateOnly: true,
       category:
         e.itemType === "VERPACKUNGSMATERIAL" ? "Verpackung" : e.itemType === "KARTON" ? "Karton" : "Unterhosen",
       typeLabel: "Austrag",
@@ -781,6 +801,7 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
       details: `${label} · ${e.reason}${e.recipient ? ` · ${e.recipient}` : ""}`,
       createdBy: e.createdBy,
       exitId: e.id,
+      notes: e.notes,
     });
   }
 
@@ -788,6 +809,7 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
     unified.push({
       id: `packaging-${p.id}`,
       date: p.createdAt,
+      dateOnly: false,
       category: "Verpackung",
       typeLabel: PACKAGING_TYPE_LABEL[p.type] ?? p.type,
       quantityDelta: p.quantityDelta,
@@ -800,6 +822,7 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
     unified.push({
       id: `carton-${c.id}`,
       date: c.createdAt,
+      dateOnly: false,
       category: "Karton",
       typeLabel: CARTON_TYPE_LABEL[c.type] ?? c.type,
       quantityDelta: c.quantityDelta,
@@ -812,6 +835,7 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
     unified.push({
       id: `maxlager-stock-${m.id}`,
       date: m.createdAt,
+      dateOnly: false,
       category: "Maxims Lager",
       typeLabel: MAXLAGER_TYPE_LABEL[m.type] ?? m.type,
       quantityDelta: m.quantityDelta,
@@ -824,6 +848,7 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
     unified.push({
       id: `maxlager-packaging-${p.id}`,
       date: p.createdAt,
+      dateOnly: false,
       category: "Maxims Lager",
       typeLabel: MAXLAGER_TYPE_LABEL[p.type] ?? p.type,
       quantityDelta: p.quantityDelta,
@@ -836,6 +861,7 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
     unified.push({
       id: `maxlager-sale-${s.id}`,
       date: s.date,
+      dateOnly: true,
       category: "Maxims Lager",
       typeLabel: "Verkauf",
       quantityDelta: -(s.packSize * s.quantity),

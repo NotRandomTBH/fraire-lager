@@ -4,6 +4,8 @@ import { useState } from "react";
 import { recordStockExitAction } from "@/app/actions";
 import { ActionForm } from "@/components/ActionForm";
 import { SubmitButton } from "@/components/SubmitButton";
+import { todayDateInputValue } from "@/lib/date";
+import { stockExitItemLabel } from "@/lib/labels";
 
 type SizeWithVariants = {
   id: string;
@@ -13,6 +15,14 @@ type SizeWithVariants = {
 };
 
 type ItemType = "UNTERHOSE" | "VERPACKUNGSMATERIAL" | "KARTON";
+
+type ExitItem = {
+  itemType: ItemType;
+  sizeId: string | null;
+  sizeLabel: string | null;
+  packSize: number | null;
+  quantity: number;
+};
 
 export function StockExitForm({
   sizes,
@@ -31,11 +41,11 @@ export function StockExitForm({
   const [packSize, setPackSize] = useState(3);
   const [materialPackSize, setMaterialPackSize] = useState(packagingStock[0]?.packSize ?? 1);
   const [quantity, setQuantity] = useState(1);
-  const today = new Date().toISOString().slice(0, 10);
+  const [items, setItems] = useState<ExitItem[]>([]);
+  const today = todayDateInputValue();
 
   const size = sizes.find((s) => s.id === sizeId);
   const variant = size?.shopifyVariants.find((v) => v.packSize === packSize);
-  const variantLinked = Boolean(variant?.shopifyVariantId);
 
   const material = packagingStock.find((p) => p.packSize === materialPackSize);
 
@@ -49,13 +59,50 @@ export function StockExitForm({
           : (size?.looseStock ?? 0);
   const remaining = available - quantity;
 
+  function currentItem(): ExitItem {
+    if (itemType === "KARTON") {
+      return { itemType, sizeId: null, sizeLabel: null, packSize: null, quantity };
+    }
+    if (itemType === "VERPACKUNGSMATERIAL") {
+      return { itemType, sizeId: null, sizeLabel: null, packSize: materialPackSize, quantity };
+    }
+    return {
+      itemType,
+      sizeId,
+      sizeLabel: size?.label ?? null,
+      packSize: packed ? packSize : null,
+      quantity,
+    };
+  }
+
+  function addPosition() {
+    if (quantity <= 0) return;
+    setItems((prev) => [...prev, currentItem()]);
+    setQuantity(1);
+  }
+
+  function removePosition(index: number) {
+    setItems((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  // Wenn keine Position explizit hinzugefügt wurde, wird beim Absenden die
+  // aktuell im Formular gewählte Position als einzelne Buchung verwendet –
+  // Einzel-Austrag bleibt dadurch genauso einfach wie zuvor.
+  const effectiveItems = items.length > 0 ? items : [currentItem()];
+  const hasEligibleShopifyItem = effectiveItems.some(
+    (i) => i.itemType === "UNTERHOSE" && i.packSize,
+  );
+
   return (
-    <ActionForm action={recordStockExitAction} resetOnSuccess className="space-y-4">
+    <ActionForm
+      action={recordStockExitAction}
+      resetOnSuccess
+      className="space-y-4"
+      onSuccess={() => setItems([])}
+    >
       <div>
         <label className="mb-1 block text-sm font-medium">Was wird ausgetragen?</label>
         <select
-          name="itemType"
-          required
           value={itemType}
           onChange={(e) => {
             setItemType(e.target.value as ItemType);
@@ -74,8 +121,6 @@ export function StockExitForm({
           <div>
             <label className="mb-1 block text-sm font-medium">Grösse</label>
             <select
-              name="sizeId"
-              required
               value={sizeId}
               onChange={(e) => setSizeId(e.target.value)}
               className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
@@ -99,11 +144,10 @@ export function StockExitForm({
             </label>
           </div>
 
-          {packed ? (
+          {packed && (
             <div>
               <label className="mb-1 block text-sm font-medium">Packungsgrösse</label>
               <select
-                name="packSize"
                 value={packSize}
                 onChange={(e) => setPackSize(Number(e.target.value))}
                 className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
@@ -113,8 +157,6 @@ export function StockExitForm({
                 <option value={5}>5er</option>
               </select>
             </div>
-          ) : (
-            <input type="hidden" name="packSize" value="" />
           )}
         </>
       )}
@@ -123,7 +165,6 @@ export function StockExitForm({
         <div>
           <label className="mb-1 block text-sm font-medium">Packgrösse</label>
           <select
-            name="packSize"
             value={materialPackSize}
             onChange={(e) => setMaterialPackSize(Number(e.target.value))}
             className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
@@ -136,19 +177,14 @@ export function StockExitForm({
           </select>
         </div>
       )}
-      {itemType === "KARTON" && <input type="hidden" name="packSize" value="" />}
-      {itemType === "KARTON" && <input type="hidden" name="sizeId" value="" />}
-      {itemType === "VERPACKUNGSMATERIAL" && <input type="hidden" name="sizeId" value="" />}
 
       <div>
         <label className="mb-1 block text-sm font-medium">
-          Anzahl {itemType === "UNTERHOSE" && packed ? "Packungen" : itemType === "UNTERHOSE" ? "Stück" : "Stück"}
+          Anzahl {itemType === "UNTERHOSE" && packed ? "Packungen" : "Stück"}
         </label>
         <input
           type="number"
-          name="quantity"
           min={1}
-          required
           value={quantity}
           onChange={(e) => setQuantity(Number(e.target.value))}
           className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
@@ -160,6 +196,37 @@ export function StockExitForm({
         danach noch{" "}
         <strong className={remaining < 0 ? "text-red-600 dark:text-red-400" : ""}>{remaining}</strong>
       </p>
+
+      <button
+        type="button"
+        onClick={addPosition}
+        disabled={quantity <= 0}
+        className="rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm disabled:opacity-50"
+      >
+        + Position hinzufügen
+      </button>
+
+      {items.length > 0 && (
+        <div className="rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3">
+          <p className="mb-2 text-sm font-medium">{items.length} Position(en) in dieser Buchung</p>
+          <ul className="space-y-1">
+            {items.map((it, i) => (
+              <li key={i} className="flex items-center justify-between text-sm">
+                <span>
+                  {it.quantity} × {stockExitItemLabel({ itemType: it.itemType, size: it.sizeLabel ? { label: it.sizeLabel } : null, packSize: it.packSize })}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removePosition(i)}
+                  className="text-neutral-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-400"
+                >
+                  entfernen
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div>
         <label className="mb-1 block text-sm font-medium">Begründung</label>
@@ -193,17 +260,18 @@ export function StockExitForm({
         />
       </div>
 
-      {itemType === "UNTERHOSE" && packed && shopifyConfigured && (
+      {shopifyConfigured && hasEligibleShopifyItem && (
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="pushToShopify" defaultChecked={false} disabled={!variantLinked} />
-          An Shopify übertragen (Bestand dort auch reduzieren)
-          {!variantLinked && (
-            <span className="text-neutral-400 dark:text-neutral-500">– keine Variante verknüpft</span>
-          )}
+          <input type="checkbox" name="pushToShopify" defaultChecked={false} />
+          An Shopify übertragen (Bestand dort für verpackte Unterhosen-Positionen auch reduzieren)
         </label>
       )}
 
-      <SubmitButton>Austragen</SubmitButton>
+      <input type="hidden" name="items" value={JSON.stringify(effectiveItems)} />
+
+      <SubmitButton>
+        {effectiveItems.length > 1 ? `${effectiveItems.length} Positionen austragen` : "Austragen"}
+      </SubmitButton>
     </ActionForm>
   );
 }

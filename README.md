@@ -40,7 +40,9 @@ Lager), **Bewegungen**, **Defekte**, **Statistik**, **Analytics** und
   Versandkartons austragen, die nicht über Shopify verkauft wurden (Muster,
   Geschenke, Ersatzlieferungen, Verschleiss, ...) – mit Begründung, Empfänger
   und Datum. Reduziert den jeweiligen Bestand sofort; bei verpackten
-  Unterhosen optional auch den echten Shopify-Bestand.
+  Unterhosen optional auch den echten Shopify-Bestand. Mehrere Positionen
+  (auch unterschiedlicher Art) lassen sich vor dem Buchen sammeln und mit
+  einer gemeinsamen Begründung/Empfänger/Datum als eine Buchung austragen.
 - **Maxims Lager**: zweites, kleineres Lager mit eigenem Bestand an losen
   Teilen (pro Grösse) und Verpackungsmaterial (pro Packgrösse), befüllt durch
   Übernahme vom Hauptlager (reduziert dort automatisch den Bestand). Von dort
@@ -55,7 +57,8 @@ Lager), **Bewegungen**, **Defekte**, **Statistik**, **Analytics** und
 - **Bewegungen**: vereinheitlichtes Protokoll aller Bestandsbewegungen
   (Wareneingang, Verpackt, Korrektur, Austrag, Maxims Lager) über Unterhosen,
   Verpackungsmaterial und Versandkartons hinweg. Austräge lassen sich darin
-  auswählen und als PDF exportieren.
+  auswählen und als PDF exportieren, sowie nachträglich mit einer Notiz
+  ergänzen (z.B. wenn sich nachträglich noch Details ergeben).
 - **Dashboard**: aktueller Bestand pro Grösse, automatische Nachbestell-Ampel
   (Rot/Gelb/Grün/Grau) + Reichweite in Tagen pro Grösse und fürs
   Verpackungsmaterial, Gesamtstatus oben (schlechteste Grösse, da in einer

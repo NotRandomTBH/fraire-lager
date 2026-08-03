@@ -4,6 +4,7 @@ import { useState } from "react";
 import { recordMaxLagerSaleAction } from "@/app/actions";
 import { ActionForm } from "@/components/ActionForm";
 import { SubmitButton } from "@/components/SubmitButton";
+import { todayDateInputValue } from "@/lib/date";
 
 export function MaxLagerSaleForm({
   sizes,
@@ -15,7 +16,7 @@ export function MaxLagerSaleForm({
   const [sizeId, setSizeId] = useState(sizes[0]?.id ?? "");
   const [packSize, setPackSize] = useState(packagingStock[0]?.packSize ?? 1);
   const [quantity, setQuantity] = useState(1);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayDateInputValue();
 
   const size = sizes.find((s) => s.id === sizeId);
   const packaging = packagingStock.find((p) => p.packSize === packSize);
