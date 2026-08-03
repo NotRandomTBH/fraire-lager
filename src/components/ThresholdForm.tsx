@@ -22,7 +22,7 @@ export function ThresholdForm({
         name="reorderThreshold"
         min={0}
         defaultValue={value}
-        className="w-24 rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+        className="w-24 rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm"
       />
       <SubmitButton className="!px-3 !py-1.5">Speichern</SubmitButton>
     </ActionForm>

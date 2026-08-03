@@ -23,7 +23,7 @@ export function MaxLagerTransferForm({
           <select
             name="sizeId"
             required
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           >
             {sizes.map((s) => (
               <option key={s.id} value={s.id}>
@@ -39,7 +39,7 @@ export function MaxLagerTransferForm({
             name="quantity"
             min={1}
             required
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           />
         </div>
         <SubmitButton>Übernehmen</SubmitButton>
@@ -52,7 +52,7 @@ export function MaxLagerTransferForm({
           <select
             name="packSize"
             required
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           >
             {packagingStock.map((p) => (
               <option key={p.packSize} value={p.packSize}>
@@ -68,7 +68,7 @@ export function MaxLagerTransferForm({
             name="quantity"
             min={1}
             required
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           />
         </div>
         <SubmitButton>Übernehmen</SubmitButton>

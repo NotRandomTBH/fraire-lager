@@ -26,19 +26,19 @@ export function NavDropdown({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 text-neutral-600 hover:text-neutral-900"
+        className="flex items-center gap-1 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
       >
         {label}
         <span className="text-xs">▾</span>
       </button>
       {open && (
-        <div className="absolute left-0 top-full z-10 mt-1 min-w-[200px] rounded-md border border-neutral-200 bg-white py-1 shadow-md">
+        <div className="absolute left-0 top-full z-10 mt-1 min-w-[200px] rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-1 shadow-md">
           {items.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="block px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+              className="block px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100"
             >
               {item.label}
             </Link>

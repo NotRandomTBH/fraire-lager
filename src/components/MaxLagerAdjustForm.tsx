@@ -23,7 +23,7 @@ export function MaxLagerAdjustForm({
           <select
             name="sizeId"
             required
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           >
             {sizes.map((s) => (
               <option key={s.id} value={s.id}>
@@ -39,7 +39,7 @@ export function MaxLagerAdjustForm({
             name="newQuantity"
             min={0}
             required
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           />
         </div>
         <div>
@@ -48,7 +48,7 @@ export function MaxLagerAdjustForm({
             type="text"
             name="note"
             placeholder="z.B. Inventur"
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           />
         </div>
         <SubmitButton>Korrektur buchen</SubmitButton>
@@ -61,7 +61,7 @@ export function MaxLagerAdjustForm({
           <select
             name="packSize"
             required
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           >
             {packagingStock.map((p) => (
               <option key={p.packSize} value={p.packSize}>
@@ -77,7 +77,7 @@ export function MaxLagerAdjustForm({
             name="newQuantity"
             min={0}
             required
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           />
         </div>
         <div>
@@ -86,7 +86,7 @@ export function MaxLagerAdjustForm({
             type="text"
             name="note"
             placeholder="z.B. Inventur"
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           />
         </div>
         <SubmitButton>Korrektur buchen</SubmitButton>

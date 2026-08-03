@@ -13,7 +13,7 @@ export function ChangePasswordForm() {
           type="password"
           name="currentPassword"
           required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
       <div>
@@ -23,7 +23,7 @@ export function ChangePasswordForm() {
           name="newPassword"
           required
           minLength={6}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
       <SubmitButton>Passwort ändern</SubmitButton>

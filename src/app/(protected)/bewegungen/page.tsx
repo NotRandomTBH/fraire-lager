@@ -10,7 +10,7 @@ export default async function BewegungenPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold">Bewegungen</h1>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Alle Bestandsbewegungen (Unterhosen, Verpackungsmaterial, Kartons) und
           Austräge an einem Ort. Austräge auswählen und als PDF exportieren.
         </p>

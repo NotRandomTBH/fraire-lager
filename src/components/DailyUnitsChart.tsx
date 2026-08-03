@@ -11,12 +11,12 @@ export function DailyUnitsChart({ series }: { series: Point[] }) {
           <div
             key={i}
             title={`${p.date.toLocaleDateString("de-CH")}: ${p.units} Stück`}
-            className="flex-1 rounded-t bg-neutral-800"
+            className="flex-1 rounded-t bg-neutral-800 dark:bg-neutral-300"
             style={{ height: `${Math.max(2, (p.units / max) * 100)}%` }}
           />
         ))}
       </div>
-      <div className="mt-1 flex gap-[2px] text-[10px] text-neutral-400">
+      <div className="mt-1 flex gap-[2px] text-[10px] text-neutral-400 dark:text-neutral-500">
         {series.map((p, i) => (
           <div key={i} className="flex-1 text-center">
             {i % labelEvery === 0 ? p.date.toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit" }) : ""}

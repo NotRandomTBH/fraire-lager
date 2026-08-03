@@ -44,7 +44,7 @@ export function VerpackenForm({
           required
           value={sizeId}
           onChange={(e) => setSizeId(e.target.value)}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         >
           {sizes.map((s) => (
             <option key={s.id} value={s.id}>
@@ -61,7 +61,7 @@ export function VerpackenForm({
           required
           value={packSize}
           onChange={(e) => setPackSize(Number(e.target.value))}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         >
           <option value={1}>1er</option>
           <option value={3}>3er</option>
@@ -78,19 +78,19 @@ export function VerpackenForm({
           required
           value={packQuantity}
           onChange={(e) => setPackQuantity(Number(e.target.value))}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
-      <p className="text-sm text-neutral-600">
+      <p className="text-sm text-neutral-600 dark:text-neutral-400">
         Benötigt: <strong>{unitsNeeded}</strong> lose Teile · danach noch{" "}
-        <strong className={remaining < 0 ? "text-red-600" : ""}>{remaining}</strong> auf
+        <strong className={remaining < 0 ? "text-red-600 dark:text-red-400" : ""}>{remaining}</strong> auf
         Lager
       </p>
-      <p className="text-sm text-neutral-600">
+      <p className="text-sm text-neutral-600 dark:text-neutral-400">
         Verpackungsmaterial {packSize}er: <strong>{packagingAvailable}</strong> vorhanden ·
         danach noch{" "}
-        <strong className={packagingRemaining < 0 ? "text-red-600" : ""}>
+        <strong className={packagingRemaining < 0 ? "text-red-600 dark:text-red-400" : ""}>
           {packagingRemaining}
         </strong>
       </p>
@@ -105,7 +105,7 @@ export function VerpackenForm({
           />
           An Shopify übertragen (Packungsbestand erhöhen)
           {!variantLinked && (
-            <span className="text-neutral-400">– keine Variante verknüpft</span>
+            <span className="text-neutral-400 dark:text-neutral-500">– keine Variante verknüpft</span>
           )}
         </label>
       )}

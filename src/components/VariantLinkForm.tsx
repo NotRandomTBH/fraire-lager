@@ -19,7 +19,7 @@ export function VariantLinkForm({
         name="sku"
         placeholder="SKU"
         disabled={disabled}
-        className="w-32 rounded-md border border-neutral-300 px-2 py-1 text-sm disabled:bg-neutral-100"
+        className="w-32 rounded-md border border-neutral-300 dark:border-neutral-700 px-2 py-1 text-sm disabled:bg-neutral-100 dark:bg-neutral-800"
       />
       <SubmitButton className="!px-3 !py-1 !text-xs">Verknüpfen</SubmitButton>
     </ActionForm>

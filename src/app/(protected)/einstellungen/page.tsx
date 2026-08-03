@@ -42,7 +42,7 @@ export default async function EinstellungenPage() {
 
       <section className="space-y-3">
         <h2 className="font-medium">Automatische Nachbestell-Prognose</h2>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Parameter für die live berechnete Ampel/Reichweite auf Dashboard und
           Analytics-Seite. Bestellpunkt = Ø-Tagesverkauf × (Lieferzeit + Puffer).
         </p>
@@ -51,7 +51,7 @@ export default async function EinstellungenPage() {
 
       <section className="space-y-3">
         <h2 className="font-medium">Nachbestell-Schwellen (manueller Override)</h2>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Zusätzlich zur automatischen Prognose oben: Alert erscheint auf dem
           Dashboard, sobald der lose Bestand einer Grösse unter diesen manuell
           gesetzten Wert fällt.
@@ -66,17 +66,17 @@ export default async function EinstellungenPage() {
       <section className="space-y-3">
         <h2 className="font-medium">Shopify-Verbindung</h2>
         {!configured ? (
-          <p className="rounded-md border border-neutral-200 bg-white p-4 text-sm text-neutral-600">
-            In <code className="rounded bg-neutral-100 px-1">.env</code> die Variablen{" "}
-            <code className="rounded bg-neutral-100 px-1">SHOPIFY_STORE_DOMAIN</code>,{" "}
-            <code className="rounded bg-neutral-100 px-1">SHOPIFY_CLIENT_ID</code> und{" "}
-            <code className="rounded bg-neutral-100 px-1">SHOPIFY_CLIENT_SECRET</code>{" "}
+          <p className="rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 text-sm text-neutral-600 dark:text-neutral-400">
+            In <code className="rounded bg-neutral-100 dark:bg-neutral-800 px-1">.env</code> die Variablen{" "}
+            <code className="rounded bg-neutral-100 dark:bg-neutral-800 px-1">SHOPIFY_STORE_DOMAIN</code>,{" "}
+            <code className="rounded bg-neutral-100 dark:bg-neutral-800 px-1">SHOPIFY_CLIENT_ID</code> und{" "}
+            <code className="rounded bg-neutral-100 dark:bg-neutral-800 px-1">SHOPIFY_CLIENT_SECRET</code>{" "}
             setzen (Custom App im Shopify Dev Dashboard) und den Server neu starten.
           </p>
         ) : (
           <>
             {locationError && (
-              <p className="text-sm text-red-600">{locationError}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">{locationError}</p>
             )}
             <LocationForm locations={locations} currentLocationId={config?.locationId ?? ""} />
           </>
@@ -85,16 +85,16 @@ export default async function EinstellungenPage() {
 
       <section className="space-y-3">
         <h2 className="font-medium">Shopify-Varianten verknüpfen &amp; Bestand korrigieren</h2>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Jede Kombination aus Grösse und Packungsgrösse mit der passenden Shopify-SKU
           verknüpfen, damit Verpacken & Sync funktionieren. Bei verknüpften Varianten kann
           der Shopify-Bestand hier auch direkt korrigiert werden (z.B. nach einer
           Inventur), statt dafür ins Shopify-Admin zu wechseln – die App holt vorher den
           echten Live-Wert und passt nur die Differenz an.
         </p>
-        <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
+        <div className="overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
           <table className="w-full text-sm">
-            <thead className="bg-neutral-100 text-left text-neutral-600">
+            <thead className="bg-neutral-100 dark:bg-neutral-800 text-left text-neutral-600 dark:text-neutral-400">
               <tr>
                 <th className="px-4 py-2">Grösse</th>
                 <th className="px-4 py-2">Pack</th>
@@ -107,23 +107,23 @@ export default async function EinstellungenPage() {
             <tbody>
               {sizes.flatMap((s) =>
                 s.shopifyVariants.map((v) => (
-                  <tr key={v.id} className="border-t border-neutral-100">
+                  <tr key={v.id} className="border-t border-neutral-100 dark:border-neutral-800">
                     <td className="px-4 py-2 font-medium">{s.label}</td>
                     <td className="px-4 py-2">{v.packSize}er</td>
-                    <td className="px-4 py-2 text-neutral-600">
+                    <td className="px-4 py-2 text-neutral-600 dark:text-neutral-400">
                       {v.shopifyVariantId ? (v.title ?? v.sku) : "– nicht verknüpft –"}
                     </td>
                     <td className="px-4 py-2">
                       <VariantLinkForm variantId={v.id} disabled={!configured} />
                     </td>
-                    <td className="px-4 py-2 text-neutral-600">
+                    <td className="px-4 py-2 text-neutral-600 dark:text-neutral-400">
                       {v.shopifyVariantId ? v.packStock : "–"}
                     </td>
                     <td className="px-4 py-2">
                       {v.shopifyVariantId && configured ? (
                         <CorrectShopifyStockForm variantId={v.id} />
                       ) : (
-                        <span className="text-neutral-400">–</span>
+                        <span className="text-neutral-400 dark:text-neutral-500">–</span>
                       )}
                     </td>
                   </tr>

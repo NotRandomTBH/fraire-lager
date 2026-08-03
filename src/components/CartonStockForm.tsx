@@ -7,16 +7,16 @@ import { SubmitButton } from "@/components/SubmitButton";
 export function CartonStockForm({ quantity }: { quantity: number }) {
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
+      <div className="overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-100 text-left text-neutral-600">
+          <thead className="bg-neutral-100 dark:bg-neutral-800 text-left text-neutral-600 dark:text-neutral-400">
             <tr>
               <th className="px-4 py-2">Versandkartons</th>
               <th className="px-4 py-2">Bestand</th>
             </tr>
           </thead>
           <tbody>
-            <tr className="border-t border-neutral-100">
+            <tr className="border-t border-neutral-100 dark:border-neutral-800">
               <td className="px-4 py-2 font-medium">Kartons</td>
               <td className="px-4 py-2">{quantity}</td>
             </tr>
@@ -32,7 +32,7 @@ export function CartonStockForm({ quantity }: { quantity: number }) {
             name="quantity"
             min={1}
             required
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           />
         </div>
         <div>
@@ -41,7 +41,7 @@ export function CartonStockForm({ quantity }: { quantity: number }) {
             type="text"
             name="note"
             placeholder="z.B. Lieferung Kartonhersteller"
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           />
         </div>
         <SubmitButton>Kartons buchen</SubmitButton>
@@ -49,7 +49,7 @@ export function CartonStockForm({ quantity }: { quantity: number }) {
 
       <ActionForm action={adjustCartonStockAction} resetOnSuccess className="space-y-4">
         <p className="text-sm font-medium">Bestand korrigieren</p>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Für Inventurkorrekturen: tatsächlich gezählten Bestand eintragen statt einer
           Zu- oder Abgangsmenge.
         </p>
@@ -60,7 +60,7 @@ export function CartonStockForm({ quantity }: { quantity: number }) {
             name="newQuantity"
             min={0}
             required
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           />
         </div>
         <div>
@@ -69,7 +69,7 @@ export function CartonStockForm({ quantity }: { quantity: number }) {
             type="text"
             name="note"
             placeholder="z.B. Inventur"
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           />
         </div>
         <SubmitButton>Korrektur buchen</SubmitButton>

@@ -16,10 +16,10 @@ export default async function LoginPage() {
 
   return (
     <div className="flex flex-1 items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-6 rounded-lg border border-neutral-200 bg-white p-8">
+      <div className="w-full max-w-sm space-y-6 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-8">
         <div>
           <h1 className="text-xl font-semibold">Lagerverwaltung</h1>
-          <p className="text-sm text-neutral-500">Bitte anmelden</p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Bitte anmelden</p>
         </div>
         <LoginForm names={users.map((u) => u.name)} />
       </div>

@@ -61,7 +61,7 @@ export function StockExitForm({
             setItemType(e.target.value as ItemType);
             setQuantity(1);
           }}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         >
           <option value="UNTERHOSE">Unterhosen</option>
           <option value="VERPACKUNGSMATERIAL">Verpackungsmaterial</option>
@@ -78,7 +78,7 @@ export function StockExitForm({
               required
               value={sizeId}
               onChange={(e) => setSizeId(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2"
+              className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
             >
               {sizes.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -106,7 +106,7 @@ export function StockExitForm({
                 name="packSize"
                 value={packSize}
                 onChange={(e) => setPackSize(Number(e.target.value))}
-                className="w-full rounded-md border border-neutral-300 px-3 py-2"
+                className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
               >
                 <option value={1}>1er</option>
                 <option value={3}>3er</option>
@@ -126,7 +126,7 @@ export function StockExitForm({
             name="packSize"
             value={materialPackSize}
             onChange={(e) => setMaterialPackSize(Number(e.target.value))}
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           >
             {packagingStock.map((p) => (
               <option key={p.packSize} value={p.packSize}>
@@ -151,14 +151,14 @@ export function StockExitForm({
           required
           value={quantity}
           onChange={(e) => setQuantity(Number(e.target.value))}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
-      <p className="text-sm text-neutral-600">
+      <p className="text-sm text-neutral-600 dark:text-neutral-400">
         Verfügbar: <strong>{available}</strong> ·
         danach noch{" "}
-        <strong className={remaining < 0 ? "text-red-600" : ""}>{remaining}</strong>
+        <strong className={remaining < 0 ? "text-red-600 dark:text-red-400" : ""}>{remaining}</strong>
       </p>
 
       <div>
@@ -168,7 +168,7 @@ export function StockExitForm({
           name="reason"
           required
           placeholder="z.B. Muster für Influencer, Ersatzlieferung"
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
@@ -178,7 +178,7 @@ export function StockExitForm({
           type="text"
           name="recipient"
           placeholder="z.B. Name / Firma"
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
@@ -189,7 +189,7 @@ export function StockExitForm({
           name="date"
           defaultValue={today}
           required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
@@ -198,7 +198,7 @@ export function StockExitForm({
           <input type="checkbox" name="pushToShopify" defaultChecked={false} disabled={!variantLinked} />
           An Shopify übertragen (Bestand dort auch reduzieren)
           {!variantLinked && (
-            <span className="text-neutral-400">– keine Variante verknüpft</span>
+            <span className="text-neutral-400 dark:text-neutral-500">– keine Variante verknüpft</span>
           )}
         </label>
       )}

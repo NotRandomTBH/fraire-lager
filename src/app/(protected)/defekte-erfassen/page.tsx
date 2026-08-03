@@ -15,7 +15,7 @@ export default async function DefekteErfassenPage() {
     <div className="max-w-lg space-y-6">
       <div>
         <h1 className="text-xl font-semibold">Defekte erfassen</h1>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Defekte Unterhosen, Verpackungsmaterial oder beschädigte
           Versandkartons dokumentieren (zählt nicht zum verkaufbaren
           Bestand). Das vollständige Protokoll findet sich unter Defekte.

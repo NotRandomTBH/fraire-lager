@@ -1,10 +1,10 @@
 import type { ReorderStatus } from "@/lib/reorder";
 
 const STYLES: Record<ReorderStatus, { label: string; className: string }> = {
-  ROT: { label: "Rot – jetzt bestellen", className: "bg-red-100 text-red-800" },
-  GELB: { label: "Gelb – bald bestellen", className: "bg-amber-100 text-amber-800" },
-  GRUEN: { label: "Grün", className: "bg-green-100 text-green-800" },
-  GRAU: { label: "Keine Daten", className: "bg-neutral-200 text-neutral-600" },
+  ROT: { label: "Rot – jetzt bestellen", className: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300" },
+  GELB: { label: "Gelb – bald bestellen", className: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300" },
+  GRUEN: { label: "Grün", className: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300" },
+  GRAU: { label: "Keine Daten", className: "bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300" },
 };
 
 export function StatusBadge({ status, compact = false }: { status: ReorderStatus; compact?: boolean }) {

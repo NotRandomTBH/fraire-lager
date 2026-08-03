@@ -32,7 +32,7 @@ export function MaxLagerSaleForm({
           required
           value={sizeId}
           onChange={(e) => setSizeId(e.target.value)}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         >
           {sizes.map((s) => (
             <option key={s.id} value={s.id}>
@@ -49,7 +49,7 @@ export function MaxLagerSaleForm({
           required
           value={packSize}
           onChange={(e) => setPackSize(Number(e.target.value))}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         >
           {packagingStock.map((p) => (
             <option key={p.packSize} value={p.packSize}>
@@ -68,15 +68,15 @@ export function MaxLagerSaleForm({
           required
           value={quantity}
           onChange={(e) => setQuantity(Number(e.target.value))}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
-      <p className="text-sm text-neutral-600">
+      <p className="text-sm text-neutral-600 dark:text-neutral-400">
         Verfügbar in Maxims Lager: <strong>{looseAvailable}</strong> lose Teile ({size?.label}),{" "}
         <strong>{packagingAvailable}</strong> {packSize}er-Verpackungen · benötigt{" "}
-        <strong className={unitsNeeded > looseAvailable ? "text-red-600" : ""}>{unitsNeeded}</strong>{" "}
-        lose Teile + <strong className={quantity > packagingAvailable ? "text-red-600" : ""}>{quantity}</strong>{" "}
+        <strong className={unitsNeeded > looseAvailable ? "text-red-600 dark:text-red-400" : ""}>{unitsNeeded}</strong>{" "}
+        lose Teile + <strong className={quantity > packagingAvailable ? "text-red-600 dark:text-red-400" : ""}>{quantity}</strong>{" "}
         Verpackung(en)
       </p>
 
@@ -86,7 +86,7 @@ export function MaxLagerSaleForm({
           type="text"
           name="recipient"
           placeholder="z.B. Name / Firma"
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
@@ -96,7 +96,7 @@ export function MaxLagerSaleForm({
           type="text"
           name="note"
           placeholder="z.B. Bestellnummer"
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
@@ -107,11 +107,11 @@ export function MaxLagerSaleForm({
           name="date"
           defaultValue={today}
           required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400">
         Bucht den Verkauf aus Maxims Lager und erhöht – falls die Kombination mit Shopify
         verknüpft ist – den Shopify-Bestand automatisch um die verkaufte Menge, da Shopify beim
         Bestelleingang bereits abgezogen hat, ohne dass das Hauptlager etwas hergegeben hat.

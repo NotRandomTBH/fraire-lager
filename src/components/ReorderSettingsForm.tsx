@@ -18,9 +18,9 @@ export function ReorderSettingsForm({
           name="leadTimeDays"
           min={0}
           defaultValue={settings.leadTimeDays}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
           Inkl. Puffer für Verzögerungen (Standard 80 Tage).
         </p>
       </div>
@@ -31,7 +31,7 @@ export function ReorderSettingsForm({
           name="safetyBufferDays"
           min={0}
           defaultValue={settings.safetyBufferDays}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
       <div>
@@ -41,7 +41,7 @@ export function ReorderSettingsForm({
           name="warningWindowDays"
           min={0}
           defaultValue={settings.warningWindowDays}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
       <SubmitButton>Speichern</SubmitButton>

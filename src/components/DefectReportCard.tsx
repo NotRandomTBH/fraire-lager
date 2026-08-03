@@ -56,13 +56,13 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
   }
 
   return (
-    <div className="rounded-md border border-neutral-200 bg-white p-4">
+    <div className="rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
       <div className="flex items-center justify-between text-sm">
         <div>
           <span className="font-medium">{defectItemLabel(report)}</span>
-          <span className="text-neutral-500"> · {report.quantity} Stück defekt</span>
+          <span className="text-neutral-500 dark:text-neutral-400"> · {report.quantity} Stück defekt</span>
         </div>
-        <div className="text-neutral-500">
+        <div className="text-neutral-500 dark:text-neutral-400">
           {report.createdAt.toLocaleString("de-CH")}
           {report.createdBy && <> · {report.createdBy}</>}
         </div>
@@ -73,7 +73,7 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
           {report.reasons.map((reason) => (
             <span
               key={reason.id}
-              className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800"
+              className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs text-amber-800 dark:text-amber-300"
             >
               {reason.label}
             </span>
@@ -81,7 +81,7 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
         </div>
       )}
 
-      {report.note && <p className="mt-1 text-sm text-neutral-600">{report.note}</p>}
+      {report.note && <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{report.note}</p>}
 
       {report.photos.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -98,10 +98,10 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
       )}
 
       {report.notes.length > 0 && (
-        <div className="mt-3 space-y-1 border-t border-neutral-100 pt-2">
+        <div className="mt-3 space-y-1 border-t border-neutral-100 dark:border-neutral-800 pt-2">
           {report.notes.map((n) => (
-            <p key={n.id} className="text-sm text-neutral-600">
-              <span className="text-neutral-400">
+            <p key={n.id} className="text-sm text-neutral-600 dark:text-neutral-400">
+              <span className="text-neutral-400 dark:text-neutral-500">
                 {n.createdAt.toLocaleString("de-CH")}
                 {n.createdBy && ` · ${n.createdBy}`}:
               </span>{" "}
@@ -112,9 +112,9 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
       )}
 
       {report.edits.length > 0 && (
-        <div className="mt-3 space-y-1 border-t border-neutral-100 pt-2">
+        <div className="mt-3 space-y-1 border-t border-neutral-100 dark:border-neutral-800 pt-2">
           {report.edits.map((e) => (
-            <p key={e.id} className="text-xs text-neutral-400">
+            <p key={e.id} className="text-xs text-neutral-400 dark:text-neutral-500">
               {e.createdAt.toLocaleString("de-CH")}
               {e.createdBy && ` · ${e.createdBy}`}: {FIELD_LABEL[e.field] ?? e.field} „
               {e.oldValue}“ → „{e.newValue}“ (Begründung: {e.reason})
@@ -126,13 +126,13 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="mt-3 text-sm text-neutral-500 underline"
+        className="mt-3 text-sm text-neutral-500 dark:text-neutral-400 underline"
       >
         {expanded ? "Weniger" : "Bearbeiten / Foto & Notiz hinzufügen"}
       </button>
 
       {expanded && (
-        <div className="mt-3 space-y-4 border-t border-neutral-100 pt-3">
+        <div className="mt-3 space-y-4 border-t border-neutral-100 dark:border-neutral-800 pt-3">
           <ActionForm
             action={addDefectPhotosAction}
             resetOnSuccess
@@ -150,7 +150,7 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
               className="w-full text-sm"
             />
             {compressing && (
-              <p className="text-xs text-neutral-500">Fotos werden verarbeitet…</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Fotos werden verarbeitet…</p>
             )}
             {newPhotos.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -184,7 +184,7 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
               name="text"
               required
               rows={2}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2 text-sm"
             />
             <SubmitButton className="!px-3 !py-1.5 !text-xs">Bemerkung speichern</SubmitButton>
           </ActionForm>
@@ -194,7 +194,7 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="text-sm text-amber-700 underline"
+                className="text-sm text-amber-700 dark:text-amber-400 underline"
               >
                 Menge / Notiz bearbeiten (Begründung nötig)
               </button>
@@ -202,7 +202,7 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
               <ActionForm
                 action={editDefectReportAction}
                 resetOnSuccess
-                className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3"
+                className="space-y-2 rounded-md border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-3"
                 onSuccess={() => setEditing(false)}
               >
                 <input type="hidden" name="reportId" value={report.id} />
@@ -213,7 +213,7 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
                     name="newQuantity"
                     min={1}
                     defaultValue={report.quantity}
-                    className="w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+                    className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm"
                   />
                 </div>
                 <div>
@@ -222,7 +222,7 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
                     type="text"
                     name="newNote"
                     defaultValue={report.note ?? ""}
-                    className="w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+                    className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm"
                   />
                 </div>
                 <div>
@@ -232,7 +232,7 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
                     name="reason"
                     required
                     placeholder="Warum wird das geändert?"
-                    className="w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+                    className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm"
                   />
                 </div>
                 <div className="flex items-center gap-3">
@@ -242,7 +242,7 @@ export function DefectReportCard({ report }: { report: DefectReportData }) {
                   <button
                     type="button"
                     onClick={() => setEditing(false)}
-                    className="text-xs text-neutral-500"
+                    className="text-xs text-neutral-500 dark:text-neutral-400"
                   >
                     Abbrechen
                   </button>

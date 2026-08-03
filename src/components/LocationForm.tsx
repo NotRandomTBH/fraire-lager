@@ -17,7 +17,7 @@ export function LocationForm({
       <select
         name="locationId"
         defaultValue={currentLocationId}
-        className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+        className="rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2 text-sm"
       >
         <option value="">– auswählen –</option>
         {locations.map((l) => (

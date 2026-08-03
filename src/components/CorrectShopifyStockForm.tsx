@@ -18,7 +18,7 @@ export function CorrectShopifyStockForm({ variantId }: { variantId: string }) {
         min={0}
         placeholder="korrekte Menge"
         required
-        className="w-28 rounded-md border border-neutral-300 px-2 py-1 text-sm"
+        className="w-28 rounded-md border border-neutral-300 dark:border-neutral-700 px-2 py-1 text-sm"
       />
       <SubmitButton className="!px-3 !py-1 !text-xs">Korrigieren</SubmitButton>
     </ActionForm>

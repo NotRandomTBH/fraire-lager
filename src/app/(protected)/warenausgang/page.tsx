@@ -15,7 +15,7 @@ export default async function WarenausgangPage() {
     <div className="max-w-lg space-y-6">
       <div>
         <h1 className="text-xl font-semibold">Warenausgang</h1>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Manuelle Austräge ausserhalb des normalen Shopify-Verkaufs – für
           Unterhosen (lose oder verpackt), Verpackungsmaterial oder
           Versandkartons, z.B. Muster, Geschenke, Ersatzlieferungen. Mit

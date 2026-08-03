@@ -31,7 +31,7 @@ export default async function MaxLagerPage() {
     <div className="max-w-2xl space-y-10">
       <div>
         <h1 className="text-xl font-semibold">Maxims Lager</h1>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Zweites Lager mit eigenem Bestand an losen Teilen und
           Verpackungsmaterial, befüllt durch Übernahme vom Hauptlager. Von
           hier aus kann direkt verpackt und verschickt werden.
@@ -41,9 +41,9 @@ export default async function MaxLagerPage() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Aktueller Bestand</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
+          <div className="overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
             <table className="w-full text-sm">
-              <thead className="bg-neutral-100 text-left text-neutral-600">
+              <thead className="bg-neutral-100 dark:bg-neutral-800 text-left text-neutral-600 dark:text-neutral-400">
                 <tr>
                   <th className="px-4 py-2">Grösse</th>
                   <th className="px-4 py-2">Lose Teile</th>
@@ -51,7 +51,7 @@ export default async function MaxLagerPage() {
               </thead>
               <tbody>
                 {maxStock.map((s) => (
-                  <tr key={s.sizeId} className="border-t border-neutral-100">
+                  <tr key={s.sizeId} className="border-t border-neutral-100 dark:border-neutral-800">
                     <td className="px-4 py-2 font-medium">{s.sizeLabel}</td>
                     <td className="px-4 py-2">{s.quantity}</td>
                   </tr>
@@ -59,9 +59,9 @@ export default async function MaxLagerPage() {
               </tbody>
             </table>
           </div>
-          <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
+          <div className="overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
             <table className="w-full text-sm">
-              <thead className="bg-neutral-100 text-left text-neutral-600">
+              <thead className="bg-neutral-100 dark:bg-neutral-800 text-left text-neutral-600 dark:text-neutral-400">
                 <tr>
                   <th className="px-4 py-2">Packgrösse</th>
                   <th className="px-4 py-2">Bestand</th>
@@ -69,7 +69,7 @@ export default async function MaxLagerPage() {
               </thead>
               <tbody>
                 {maxPackaging.map((p) => (
-                  <tr key={p.packSize} className="border-t border-neutral-100">
+                  <tr key={p.packSize} className="border-t border-neutral-100 dark:border-neutral-800">
                     <td className="px-4 py-2 font-medium">{p.packSize}er</td>
                     <td className="px-4 py-2">{p.quantity}</td>
                   </tr>
@@ -80,25 +80,25 @@ export default async function MaxLagerPage() {
         </div>
       </section>
 
-      <section className="space-y-3 border-t border-neutral-200 pt-8">
+      <section className="space-y-3 border-t border-neutral-200 dark:border-neutral-800 pt-8">
         <h2 className="text-lg font-semibold">Vom Hauptlager übernehmen</h2>
         <MaxLagerTransferForm sizes={hauptlagerSizes} packagingStock={hauptlagerPackaging} />
       </section>
 
-      <section className="space-y-3 border-t border-neutral-200 pt-8">
+      <section className="space-y-3 border-t border-neutral-200 dark:border-neutral-800 pt-8">
         <h2 className="text-lg font-semibold">Verkaufen / Versenden</h2>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Für eine Bestellung, die direkt aus Maxims Lager verschickt wird.
         </p>
         <MaxLagerSaleForm sizes={maxSizesForForms} packagingStock={maxPackaging} />
       </section>
 
       {recentSales.length > 0 && (
-        <section className="space-y-3 border-t border-neutral-200 pt-8">
+        <section className="space-y-3 border-t border-neutral-200 dark:border-neutral-800 pt-8">
           <h2 className="text-lg font-semibold">Letzte Verkäufe</h2>
-          <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
+          <div className="overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
             <table className="w-full text-sm">
-              <thead className="bg-neutral-100 text-left text-neutral-600">
+              <thead className="bg-neutral-100 dark:bg-neutral-800 text-left text-neutral-600 dark:text-neutral-400">
                 <tr>
                   <th className="px-3 py-2">Datum</th>
                   <th className="px-3 py-2">Grösse</th>
@@ -109,21 +109,21 @@ export default async function MaxLagerPage() {
               </thead>
               <tbody>
                 {recentSales.map((s) => (
-                  <tr key={s.id} className="border-t border-neutral-100">
-                    <td className="px-3 py-2 whitespace-nowrap text-neutral-500">
+                  <tr key={s.id} className="border-t border-neutral-100 dark:border-neutral-800">
+                    <td className="px-3 py-2 whitespace-nowrap text-neutral-500 dark:text-neutral-400">
                       {s.date.toLocaleDateString("de-CH")}
                     </td>
                     <td className="px-3 py-2 font-medium">{s.size.label}</td>
                     <td className="px-3 py-2">
                       {s.quantity} × {s.packSize}er
                       {s.pushedToShopify && (
-                        <span className="ml-1 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-800">
+                        <span className="ml-1 rounded bg-green-100 dark:bg-green-900/40 px-1.5 py-0.5 text-xs text-green-800 dark:text-green-300">
                           Shopify
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-neutral-600">{s.recipient ?? "–"}</td>
-                    <td className="px-3 py-2 text-neutral-500">{s.createdBy ?? "–"}</td>
+                    <td className="px-3 py-2 text-neutral-600 dark:text-neutral-400">{s.recipient ?? "–"}</td>
+                    <td className="px-3 py-2 text-neutral-500 dark:text-neutral-400">{s.createdBy ?? "–"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -132,9 +132,9 @@ export default async function MaxLagerPage() {
         </section>
       )}
 
-      <section className="space-y-3 border-t border-neutral-200 pt-8">
+      <section className="space-y-3 border-t border-neutral-200 dark:border-neutral-800 pt-8">
         <h2 className="text-lg font-semibold">Bestand korrigieren</h2>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Für Inventurkorrekturen: tatsächlich gezählten Bestand eintragen
           statt einer Zu- oder Abgangsmenge.
         </p>

@@ -16,7 +16,7 @@ export function AdjustStockForm({
         <select
           name="sizeId"
           required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         >
           {sizes.map((s) => (
             <option key={s.id} value={s.id}>
@@ -32,7 +32,7 @@ export function AdjustStockForm({
           name="newQuantity"
           min={0}
           required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
       <div>
@@ -41,7 +41,7 @@ export function AdjustStockForm({
           type="text"
           name="note"
           placeholder="z.B. Inventur"
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
       <SubmitButton>Korrektur buchen</SubmitButton>

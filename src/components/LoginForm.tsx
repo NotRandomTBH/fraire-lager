@@ -16,7 +16,7 @@ export function LoginForm({ names }: { names: string[] }) {
         <select
           name="name"
           required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         >
           {names.map((name) => (
             <option key={name} value={name}>
@@ -32,10 +32,10 @@ export function LoginForm({ names }: { names: string[] }) {
           name="password"
           required
           autoFocus
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
-      {state.error && <p className="text-sm text-red-700">{state.error}</p>}
+      {state.error && <p className="text-sm text-red-700 dark:text-red-400">{state.error}</p>}
       <SubmitButton className="w-full">Anmelden</SubmitButton>
     </form>
   );

@@ -16,7 +16,7 @@ export function WareneingangForm({
         <select
           name="sizeId"
           required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         >
           {sizes.map((s) => (
             <option key={s.id} value={s.id}>
@@ -33,7 +33,7 @@ export function WareneingangForm({
           name="quantity"
           min={1}
           required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
@@ -43,7 +43,7 @@ export function WareneingangForm({
           type="text"
           name="note"
           placeholder="z.B. Lieferung Rechnung #123"
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 

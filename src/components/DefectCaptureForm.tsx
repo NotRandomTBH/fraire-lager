@@ -81,7 +81,7 @@ export function DefectCaptureForm({
           required
           value={itemType}
           onChange={(e) => setItemType(e.target.value as ItemType)}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         >
           <option value="UNTERHOSE">Unterhosen</option>
           <option value="VERPACKUNG">Verpackungsmaterial</option>
@@ -95,7 +95,7 @@ export function DefectCaptureForm({
           <select
             name="sizeId"
             required
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           >
             {sizes.map((s) => (
               <option key={s.id} value={s.id}>
@@ -113,7 +113,7 @@ export function DefectCaptureForm({
             name="packSize"
             value={packSize}
             onChange={(e) => setPackSize(Number(e.target.value))}
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
+            className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           >
             {packagingStock.map((p) => (
               <option key={p.packSize} value={p.packSize}>
@@ -134,7 +134,7 @@ export function DefectCaptureForm({
           min={1}
           required
           defaultValue={1}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
@@ -152,7 +152,7 @@ export function DefectCaptureForm({
             </label>
           ))}
           {reasons.length === 0 && (
-            <p className="text-sm text-neutral-400">Noch keine Defekt-Arten angelegt.</p>
+            <p className="text-sm text-neutral-400 dark:text-neutral-500">Noch keine Defekt-Arten angelegt.</p>
           )}
         </div>
         <div className="mt-2 flex gap-2">
@@ -167,13 +167,13 @@ export function DefectCaptureForm({
               }
             }}
             placeholder="Neue Defekt-Art…"
-            className="flex-1 rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+            className="flex-1 rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm"
           />
           <button
             type="button"
             onClick={handleAddReason}
             disabled={addingReason || !newReasonLabel.trim()}
-            className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm disabled:opacity-50"
+            className="rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-1.5 text-sm disabled:opacity-50"
           >
             + Hinzufügen
           </button>
@@ -186,7 +186,7 @@ export function DefectCaptureForm({
           type="text"
           name="defectNote"
           placeholder="zusätzliche Details"
-          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+          className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />
       </div>
 
@@ -200,7 +200,7 @@ export function DefectCaptureForm({
           onChange={(e) => handleFiles(e.target.files)}
           className="w-full text-sm"
         />
-        {compressing && <p className="mt-1 text-xs text-neutral-500">Fotos werden verarbeitet…</p>}
+        {compressing && <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Fotos werden verarbeitet…</p>}
         {photos.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {photos.map((photo, i) => (

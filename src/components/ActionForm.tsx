@@ -35,7 +35,7 @@ export function ActionForm({
       {state.message && (
         <p
           className={`mt-2 text-sm ${
-            state.ok ? "text-green-700" : "text-red-700"
+            state.ok ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"
           }`}
         >
           {state.message}

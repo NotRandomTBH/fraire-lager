@@ -31,17 +31,17 @@ export default async function ProtectedLayout({
 
   return (
     <>
-      <header className="border-b border-neutral-200 bg-white">
+      <header className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
         <div className="mx-auto max-w-5xl space-y-2 px-4 py-3">
           <div className="flex items-center justify-between">
-            <span className="font-semibold">Lagerverwaltung</span>
-            <div className="flex items-center gap-3 text-sm text-neutral-500">
+            <span className="font-semibold text-neutral-900 dark:text-neutral-100">Lagerverwaltung</span>
+            <div className="flex items-center gap-3 text-sm text-neutral-500 dark:text-neutral-400">
               <span>{user.name}</span>
               <LogoutButton />
             </div>
           </div>
           <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            <Link href="/" className="text-neutral-600 hover:text-neutral-900">
+            <Link href="/" className="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100">
               Dashboard
             </Link>
             <NavDropdown label="Lager" items={LAGER_ITEMS} />
@@ -49,7 +49,7 @@ export default async function ProtectedLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-neutral-600 hover:text-neutral-900"
+                className="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
               >
                 {item.label}
               </Link>

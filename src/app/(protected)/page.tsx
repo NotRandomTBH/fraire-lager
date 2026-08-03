@@ -44,16 +44,16 @@ export default async function DashboardPage() {
         <div
           className={`rounded-md border p-4 ${
             worst.status === "ROT"
-              ? "border-red-300 bg-red-50"
+              ? "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40"
               : worst.status === "GELB"
-                ? "border-amber-300 bg-amber-50"
-                : "border-neutral-200 bg-white"
+                ? "border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40"
+                : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
           }`}
         >
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-medium">Nachbestell-Prognose (automatisch)</h2>
-              <p className="mt-1 text-sm text-neutral-600">
+              <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
                 Schlechtester Status: <strong>{worst.sizeLabels.join(", ")}</strong> – da ihr in
                 einer MOQ-Charge für alle Grössen zusammen bestellt, ist das der massgebliche
                 Zeitpunkt.
@@ -61,16 +61,16 @@ export default async function DashboardPage() {
             </div>
             <StatusBadge status={worst.status} />
           </div>
-          <Link href="/analytics" className="mt-2 inline-block text-sm text-neutral-500 underline">
+          <Link href="/analytics" className="mt-2 inline-block text-sm text-neutral-500 dark:text-neutral-400 underline">
             Details pro Grösse ansehen
           </Link>
         </div>
       )}
 
       {alerts.length > 0 && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-4">
-          <h2 className="font-medium text-amber-900">Nachbestellen (manueller Schwellenwert)</h2>
-          <ul className="mt-2 space-y-1 text-sm text-amber-900">
+        <div className="rounded-md border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-4">
+          <h2 className="font-medium text-amber-900 dark:text-amber-200">Nachbestellen (manueller Schwellenwert)</h2>
+          <ul className="mt-2 space-y-1 text-sm text-amber-900 dark:text-amber-200">
             {alerts.map((a) => (
               <li key={a.id}>
                 Grösse <strong>{a.label}</strong>: nur noch{" "}
@@ -83,9 +83,9 @@ export default async function DashboardPage() {
 
       <section>
         <h2 className="mb-3 font-medium">Lagerbestand pro Grösse</h2>
-        <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
+        <div className="overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
           <table className="w-full text-sm">
-            <thead className="bg-neutral-100 text-left text-neutral-600">
+            <thead className="bg-neutral-100 dark:bg-neutral-800 text-left text-neutral-600 dark:text-neutral-400">
               <tr>
                 <th className="px-4 py-2">Grösse</th>
                 <th className="px-4 py-2">Lose Teile</th>
@@ -100,21 +100,21 @@ export default async function DashboardPage() {
               {sizes.map((s) => {
                 const forecast = forecastBySizeId.get(s.id);
                 return (
-                  <tr key={s.id} className="border-t border-neutral-100">
+                  <tr key={s.id} className="border-t border-neutral-100 dark:border-neutral-800">
                     <td className="px-4 py-2 font-medium">{s.label}</td>
                     <td className="px-4 py-2">{s.looseStock}</td>
                     <td className="px-4 py-2">{forecast?.currentStockUnits ?? "–"}</td>
                     <td className="px-4 py-2">
                       {forecast && <StatusBadge status={forecast.calc.status} compact />}
                     </td>
-                    <td className="px-4 py-2 text-neutral-600">
+                    <td className="px-4 py-2 text-neutral-600 dark:text-neutral-400">
                       {formatDays(forecast?.calc.daysUntilMustOrder ?? null)}
                       {forecast?.lowConfidence && (
-                        <span className="ml-1 text-xs text-neutral-400">(geringe Datenbasis)</span>
+                        <span className="ml-1 text-xs text-neutral-400 dark:text-neutral-500">(geringe Datenbasis)</span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-neutral-500">{s.reorderThreshold}</td>
-                    <td className="px-4 py-2 text-neutral-600">
+                    <td className="px-4 py-2 text-neutral-500 dark:text-neutral-400">{s.reorderThreshold}</td>
+                    <td className="px-4 py-2 text-neutral-600 dark:text-neutral-400">
                       {s.shopifyVariants
                         .map((v) => `${v.packSize}er: ${v.packStock}`)
                         .join(" · ")}
@@ -132,9 +132,9 @@ export default async function DashboardPage() {
           <h2 className="font-medium">Verpackungsmaterial</h2>
           {worstPackaging && <StatusBadge status={worstPackaging.status} compact />}
         </div>
-        <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
+        <div className="overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
           <table className="w-full text-sm">
-            <thead className="bg-neutral-100 text-left text-neutral-600">
+            <thead className="bg-neutral-100 dark:bg-neutral-800 text-left text-neutral-600 dark:text-neutral-400">
               <tr>
                 <th className="px-4 py-2">Packgrösse</th>
                 <th className="px-4 py-2">Bestand</th>
@@ -146,13 +146,13 @@ export default async function DashboardPage() {
               {packagingStock.map((p) => {
                 const forecast = packagingForecasts.find((f) => f.packSize === p.packSize);
                 return (
-                  <tr key={p.packSize} className="border-t border-neutral-100">
+                  <tr key={p.packSize} className="border-t border-neutral-100 dark:border-neutral-800">
                     <td className="px-4 py-2 font-medium">{p.packSize}er</td>
                     <td className="px-4 py-2">{p.quantity}</td>
                     <td className="px-4 py-2">
                       {forecast && <StatusBadge status={forecast.calc.status} compact />}
                     </td>
-                    <td className="px-4 py-2 text-neutral-600">
+                    <td className="px-4 py-2 text-neutral-600 dark:text-neutral-400">
                       {formatDays(forecast?.calc.daysUntilMustOrder ?? null)}
                     </td>
                   </tr>
@@ -161,7 +161,7 @@ export default async function DashboardPage() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
           Versandkartons: <strong>{cartonStock}</strong> Stück
         </p>
       </section>
@@ -169,7 +169,7 @@ export default async function DashboardPage() {
       <section>
         <h2 className="mb-3 font-medium">Bestseller (letzte 30 Tage, aus Shopify-Verkäufen)</h2>
         {bestSellers.length === 0 ? (
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Noch keine Verkaufsdaten.{" "}
             {isShopifyConfigured()
               ? "Oben rechts synchronisieren."
@@ -179,7 +179,7 @@ export default async function DashboardPage() {
           <ol className="space-y-1 text-sm">
             {bestSellers.map((b, i) => (
               <li key={`${b.sizeLabel}-${b.packSize}`} className="flex gap-2">
-                <span className="text-neutral-400">{i + 1}.</span>
+                <span className="text-neutral-400 dark:text-neutral-500">{i + 1}.</span>
                 <span>
                   {b.sizeLabel} – {b.packSize}er Pack:{" "}
                   <strong>{b.unitsSold}</strong> verkaufte Packungen
@@ -191,16 +191,16 @@ export default async function DashboardPage() {
       </section>
 
       <div className="flex flex-wrap gap-3 text-sm">
-        <Link href="/wareneingang/unterhosen" className="rounded-md border border-neutral-300 px-4 py-2">
+        <Link href="/wareneingang/unterhosen" className="rounded-md border border-neutral-300 dark:border-neutral-700 px-4 py-2">
           Wareneingang buchen
         </Link>
-        <Link href="/verpacken" className="rounded-md border border-neutral-300 px-4 py-2">
+        <Link href="/verpacken" className="rounded-md border border-neutral-300 dark:border-neutral-700 px-4 py-2">
           Packung verpacken
         </Link>
-        <Link href="/warenausgang" className="rounded-md border border-neutral-300 px-4 py-2">
+        <Link href="/warenausgang" className="rounded-md border border-neutral-300 dark:border-neutral-700 px-4 py-2">
           Warenausgang buchen
         </Link>
-        <Link href="/analytics" className="rounded-md border border-neutral-300 px-4 py-2">
+        <Link href="/analytics" className="rounded-md border border-neutral-300 dark:border-neutral-700 px-4 py-2">
           Analytics
         </Link>
       </div>

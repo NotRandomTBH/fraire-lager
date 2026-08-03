@@ -19,10 +19,10 @@ function downloadBase64Pdf(base64: string, filename: string) {
 }
 
 const CATEGORY_BADGE: Record<string, string> = {
-  Unterhosen: "bg-neutral-100 text-neutral-700",
-  Verpackung: "bg-blue-100 text-blue-700",
-  Karton: "bg-purple-100 text-purple-700",
-  "Maxims Lager": "bg-amber-100 text-amber-800",
+  Unterhosen: "bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300",
+  Verpackung: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400",
+  Karton: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400",
+  "Maxims Lager": "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300",
 };
 
 export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) {
@@ -60,13 +60,13 @@ export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) 
   }
 
   if (movements.length === 0) {
-    return <p className="text-sm text-neutral-400">Noch keine Bewegungen.</p>;
+    return <p className="text-sm text-neutral-400 dark:text-neutral-500">Noch keine Bewegungen.</p>;
   }
 
   return (
     <div className="space-y-4">
       {exitIds.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-neutral-200 bg-white p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3">
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -79,18 +79,18 @@ export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) 
             type="button"
             onClick={handleExport}
             disabled={selected.size === 0 || generating}
-            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-md bg-neutral-900 dark:bg-neutral-100 px-4 py-2 text-sm font-medium text-white dark:text-neutral-900 disabled:opacity-50"
           >
             {generating ? "PDF wird erstellt…" : "Austräge als PDF"}
           </button>
         </div>
       )}
 
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-red-700 dark:text-red-400">{error}</p>}
 
-      <div className="overflow-x-auto rounded-md border border-neutral-200 bg-white">
+      <div className="overflow-x-auto rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-100 text-left text-neutral-600">
+          <thead className="bg-neutral-100 dark:bg-neutral-800 text-left text-neutral-600 dark:text-neutral-400">
             <tr>
               <th className="px-3 py-2"></th>
               <th className="px-3 py-2">Datum</th>
@@ -103,7 +103,7 @@ export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) 
           </thead>
           <tbody>
             {movements.map((m) => (
-              <tr key={m.id} className="border-t border-neutral-100">
+              <tr key={m.id} className="border-t border-neutral-100 dark:border-neutral-800">
                 <td className="px-3 py-2">
                   {m.exitId && (
                     <input
@@ -113,25 +113,25 @@ export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) 
                     />
                   )}
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap text-neutral-500">
+                <td className="px-3 py-2 whitespace-nowrap text-neutral-500 dark:text-neutral-400">
                   {m.date.toLocaleString("de-CH")}
                 </td>
                 <td className="px-3 py-2">
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${CATEGORY_BADGE[m.category] ?? "bg-neutral-100 text-neutral-700"}`}
+                    className={`rounded-full px-2 py-0.5 text-xs ${CATEGORY_BADGE[m.category] ?? "bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"}`}
                   >
                     {m.category}
                   </span>
                 </td>
                 <td className="px-3 py-2">{m.typeLabel}</td>
                 <td
-                  className={`px-3 py-2 ${m.quantityDelta < 0 ? "text-red-600" : "text-green-700"}`}
+                  className={`px-3 py-2 ${m.quantityDelta < 0 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400"}`}
                 >
                   {m.quantityDelta > 0 ? "+" : ""}
                   {m.quantityDelta}
                 </td>
-                <td className="px-3 py-2 text-neutral-500">{m.details}</td>
-                <td className="px-3 py-2 text-neutral-500">{m.createdBy ?? "–"}</td>
+                <td className="px-3 py-2 text-neutral-500 dark:text-neutral-400">{m.details}</td>
+                <td className="px-3 py-2 text-neutral-500 dark:text-neutral-400">{m.createdBy ?? "–"}</td>
               </tr>
             ))}
           </tbody>
