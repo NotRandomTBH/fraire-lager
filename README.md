@@ -94,6 +94,52 @@ alle: `willkommen2026`. Jede Person kann ihr Passwort unter
 **Einstellungen → Eigenes Passwort ändern** selbst ändern (empfohlen, sobald
 alle einmal drin waren).
 
+## Anwendungsfälle – welches Menü für was?
+
+Konkrete Alltagssituationen und wo sie erfasst werden:
+
+| Situation | Menü | Hinweis |
+| --- | --- | --- |
+| Neue lose Unterhosen vom Produzenten kommen an | Lager → Wareneingang Unterhosen | Menge pro Grösse einbuchen |
+| Neues Verpackungsmaterial/Kartons kommen an | Lager → Wareneingang Verpackung | pro Packgrösse bzw. Kartons |
+| Beim Auspacken/Zählen fällt ein Defekt auf | Defekte erfassen | Menge + mind. eine Defekt-Art oder Notiz + optional Fotos |
+| Lose Teile zu einer verkaufsfertigen Packung zusammenstellen | Lager → Verpacken | reduziert lose Teile + Verpackungsmaterial; "Nach Shopify pushen" nur ankreuzen, wenn die Packung wirklich sofort online verkaufbar sein soll |
+| Muster/Geschenk/Ersatzlieferung geht raus (kein Shopify-Verkauf) | Lager → Warenausgang | Begründung + Empfänger sind Pflicht; mehrere Positionen lassen sich vor dem Buchen sammeln |
+| Shopify-Bestand einer Variante stimmt nicht mehr (z.B. Schwund online, Korrektur ohne Warenbewegung) | Lager → Warenausgang → Position "Shopify-Bestand" | rührt das Hauptlager NICHT an, nur den echten Shopify-Bestand – immer mit Begründung |
+| Verkauf/Versand direkt ab Maxims Lager | Lager → Maxims Lager | verbraucht dortigen Bestand, gleicht Shopify-Abzug automatisch aus (siehe Erklärung oben) |
+| Inventur ergibt eine Abweichung (Hauptlager, Verpackung, Kartons, Maxims Lager) | jeweils "Bestand korrigieren" in der passenden Sektion | immer mit Grund (Pflichtfeld), landet nachvollziehbar in Bewegungen |
+| Nachträglich fällt zu einem Austrag noch ein Detail ein (z.B. Trackingnummer) | Bewegungen → Zeile aufklappen → Notiz hinzufügen | ändert die ursprüngliche Buchung nicht, ergänzt nur eine Notiz |
+| Nachvollziehen, was wann warum gebucht wurde | Bewegungen | nach Kategorie filterbar; Austräge als PDF exportierbar |
+| Defekt-Liste für den Produzenten | Defekte → Auswahl → PDF-Export | zweisprachig (Deutsch/Portugiesisch), ohne Fotos |
+
+**Grundregel für "Verpacken" vs. "Warenausgang → Verpackungsmaterial":**
+"Verpacken" bezeichnet ausschliesslich das Zusammenstellen einer verkaufsfertigen
+Packung aus losen Teilen (optional mit Shopify-Push). Wird stattdessen nur
+Verpackungsmaterial selbst ausgetragen (Schwund, Defekt-Entsorgung, interne
+Weitergabe, ...), ist das ein normaler "Warenausgang" – dabei wird nichts
+"verpackt".
+
+## Datenintegrität & Nachvollziehbarkeit
+
+- **Pflichtfelder**: Jede Korrektur (Bestand, Warenausgang, Maxims Lager) verlangt
+  eine Begründung bzw. einen Empfänger, damit sich jede Bestandsänderung im
+  Nachhinein erklären lässt. Optional bleiben nur echte Zusatzinfos (z.B. Notiz
+  beim Wareneingang).
+- **Ein Datensatz pro Ereignis**: Jede Buchung (Austrag, Verkauf, Korrektur)
+  erzeugt genau einen Eintrag in Bewegungen – auch wenn dabei mehrere lokale
+  Bestände gleichzeitig betroffen sind (z.B. lose Teile + Verpackungsmaterial
+  bei einem Maxims-Lager-Verkauf). So taucht kein Ereignis doppelt auf.
+- **Lokale Buchung vs. Shopify-Sync**: Bucht ihr z.B. einen Warenausgang mit
+  "nach Shopify pushen" und Shopify ist gerade nicht erreichbar, wird der
+  lokale Austrag trotzdem gebucht (er ist ja physisch passiert) – die App
+  meldet aber explizit, dass der Shopify-Abgleich fehlgeschlagen ist, statt es
+  stillschweigend als erledigt zu markieren. Bei der Position "Shopify-Bestand"
+  im Warenausgang (die ausschliesslich Shopify betrifft) gilt das Gegenteil:
+  schlägt der Shopify-Aufruf fehl, wird lokal gar nichts gebucht.
+- **Datum ohne Uhrzeit**: Frei wählbare Datumsfelder (z.B. beim Austragen)
+  zeigen bewusst keine Uhrzeit an, da sie keine trägt – das verhindert
+  irreführende Zeitangaben wie "02:00" durch Zeitzonen-Umrechnung.
+
 ## Lokale Entwicklung
 
 ```bash
@@ -188,7 +234,7 @@ Jeder `git push` auf `main` deployt danach automatisch neu.
 ### Tests
 
 ```bash
-npm test   # Vitest – Formel-Tests für die Bestellpunkt-Berechnung
+npm test   # Vitest – Bestellpunkt-Formel, Label-Helfer, Datums-Helfer
 ```
 
 ### Datenbank-Befehle

@@ -107,15 +107,24 @@ export async function packStock(input: {
     const config = await prisma.shopifyConfig.findUnique({ where: { id: "singleton" } });
 
     if (variant?.shopifyInventoryItemId && config?.locationId) {
-      await adjustInventory(
-        variant.shopifyInventoryItemId,
-        config.locationId,
-        input.packQuantity,
-      );
-      await prisma.shopifyVariant.update({
-        where: { id: variant.id },
-        data: { packStock: { increment: input.packQuantity } },
-      });
+      try {
+        await adjustInventory(
+          variant.shopifyInventoryItemId,
+          config.locationId,
+          input.packQuantity,
+        );
+        await prisma.shopifyVariant.update({
+          where: { id: variant.id },
+          data: { packStock: { increment: input.packQuantity } },
+        });
+      } catch (e) {
+        // Verpacken (Hauptlager) ist bereits gebucht – das darf ein Shopify-Fehler
+        // nicht rückgängig machen. Stattdessen ehrlich melden, damit manuell
+        // synchronisiert werden kann.
+        throw new Error(
+          `Verpackt und Hauptlager aktualisiert, aber Shopify-Sync fehlgeschlagen: ${(e as Error).message}. Bitte Shopify-Bestand manuell prüfen.`,
+        );
+      }
     }
   }
 }
@@ -161,6 +170,9 @@ export async function adjustLooseStock(input: {
   note?: string;
   createdBy?: string;
 }) {
+  if (!input.note?.trim()) {
+    throw new Error("Grund ist erforderlich.");
+  }
   const size = await prisma.size.findUniqueOrThrow({ where: { id: input.sizeId } });
   const delta = input.newQuantity - size.looseStock;
   if (delta === 0) return;
@@ -203,6 +215,9 @@ export async function recordDefect(input: {
   }
   if (itemType === "VERPACKUNG" && !input.packSize) {
     throw new Error("Packgrösse ist erforderlich.");
+  }
+  if (!(input.reasonIds && input.reasonIds.length > 0) && !input.note?.trim()) {
+    throw new Error("Mindestens eine Defekt-Art auswählen oder eine Notiz eintragen.");
   }
 
   await prisma.defectReport.create({
@@ -391,6 +406,9 @@ export async function adjustPackagingStock(input: {
   if (input.newQuantity < 0) {
     throw new Error("Bestand darf nicht negativ sein.");
   }
+  if (!input.note?.trim()) {
+    throw new Error("Grund ist erforderlich.");
+  }
 
   const packaging = await prisma.packagingStock.findUnique({ where: { packSize: input.packSize } });
   const current = packaging?.quantity ?? 0;
@@ -460,6 +478,9 @@ export async function adjustCartonStock(input: {
 }) {
   if (input.newQuantity < 0) {
     throw new Error("Bestand darf nicht negativ sein.");
+  }
+  if (!input.note?.trim()) {
+    throw new Error("Grund ist erforderlich.");
   }
 
   const current = await prisma.cartonStock.findUnique({ where: { id: "singleton" } });
@@ -624,6 +645,11 @@ export async function recordStockExit(input: {
       throw new Error("Keine Shopify-Location konfiguriert (Einstellungen).");
     }
 
+    // Diese Position hat keine eigenständige physische Bedeutung ausserhalb von
+    // Shopify – deshalb erst den Shopify-Aufruf, danach erst lokal committen.
+    // Schlägt Shopify fehl, wird nichts gebucht (kein "Austrag" ohne Wirkung).
+    await adjustInventory(variant.shopifyInventoryItemId, config.locationId, -input.quantity);
+
     await prisma.$transaction([
       prisma.shopifyVariant.update({
         where: { id: variant.id },
@@ -643,8 +669,6 @@ export async function recordStockExit(input: {
         },
       }),
     ]);
-
-    await adjustInventory(variant.shopifyInventoryItemId, config.locationId, -input.quantity);
     return;
   }
 
@@ -697,6 +721,24 @@ export async function recordStockExit(input: {
   const wantsShopifyPush =
     Boolean(input.pushToShopify) && isShopifyConfigured() && Boolean(variant.shopifyInventoryItemId);
 
+  // Der physische Austrag aus dem Hauptlager ist unabhängig davon wahr, ob der
+  // optionale Shopify-Push klappt – deshalb wird zuerst versucht zu pushen und
+  // das TATSÄCHLICHE Ergebnis (nicht nur die Absicht) in pushedToShopify
+  // festgehalten, statt lokal fälschlich "gepusht" zu behaupten.
+  let shopifyPushSucceeded = false;
+  let shopifyError: string | null = null;
+  if (wantsShopifyPush) {
+    const config = await prisma.shopifyConfig.findUnique({ where: { id: "singleton" } });
+    if (variant.shopifyInventoryItemId && config?.locationId) {
+      try {
+        await adjustInventory(variant.shopifyInventoryItemId, config.locationId, -input.quantity);
+        shopifyPushSucceeded = true;
+      } catch (e) {
+        shopifyError = (e as Error).message;
+      }
+    }
+  }
+
   await prisma.$transaction([
     prisma.shopifyVariant.update({
       where: { id: variant.id },
@@ -712,16 +754,15 @@ export async function recordStockExit(input: {
         recipient: input.recipient,
         date: input.date,
         createdBy: input.createdBy,
-        pushedToShopify: wantsShopifyPush,
+        pushedToShopify: shopifyPushSucceeded,
       },
     }),
   ]);
 
-  if (wantsShopifyPush) {
-    const config = await prisma.shopifyConfig.findUnique({ where: { id: "singleton" } });
-    if (variant.shopifyInventoryItemId && config?.locationId) {
-      await adjustInventory(variant.shopifyInventoryItemId, config.locationId, -input.quantity);
-    }
+  if (shopifyError) {
+    throw new Error(
+      `Austrag gebucht, aber Shopify-Bestand konnte nicht reduziert werden: ${shopifyError}. Bitte manuell in Shopify korrigieren.`,
+    );
   }
 }
 

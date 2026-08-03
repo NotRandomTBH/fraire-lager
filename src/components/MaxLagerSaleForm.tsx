@@ -82,10 +82,11 @@ export function MaxLagerSaleForm({
       </p>
 
       <div>
-        <label className="mb-1 block text-sm font-medium">Empfänger / Kunde (optional)</label>
+        <label className="mb-1 block text-sm font-medium">Empfänger / Kunde</label>
         <input
           type="text"
           name="recipient"
+          required
           placeholder="z.B. Name / Firma"
           className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
         />

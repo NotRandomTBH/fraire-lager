@@ -133,6 +133,9 @@ export async function adjustMaxLagerStock(input: {
   if (input.newQuantity < 0) {
     throw new Error("Bestand darf nicht negativ sein.");
   }
+  if (!input.note?.trim()) {
+    throw new Error("Grund ist erforderlich.");
+  }
 
   const current = await prisma.maxLagerStock.findUnique({ where: { sizeId: input.sizeId } });
   const delta = input.newQuantity - (current?.quantity ?? 0);
@@ -164,6 +167,9 @@ export async function adjustMaxLagerPackagingStock(input: {
 }) {
   if (input.newQuantity < 0) {
     throw new Error("Bestand darf nicht negativ sein.");
+  }
+  if (!input.note?.trim()) {
+    throw new Error("Grund ist erforderlich.");
   }
 
   const current = await prisma.maxLagerPackagingStock.findUnique({ where: { packSize: input.packSize } });
@@ -203,6 +209,9 @@ export async function recordMaxLagerSale(input: {
   if (input.quantity <= 0) {
     throw new Error("Menge muss grösser als 0 sein.");
   }
+  if (!input.recipient?.trim()) {
+    throw new Error("Empfänger / Kunde ist erforderlich.");
+  }
 
   const size = await prisma.size.findUniqueOrThrow({ where: { id: input.sizeId } });
   const looseStock = await prisma.maxLagerStock.findUnique({ where: { sizeId: input.sizeId } });
@@ -232,6 +241,21 @@ export async function recordMaxLagerSale(input: {
   const wantsShopifyPush =
     isShopifyConfigured() && Boolean(variant?.shopifyInventoryItemId) && Boolean(config?.locationId);
 
+  // Der physische Verkauf/Versand aus Maxims Lager ist unabhängig davon wahr,
+  // ob der Shopify-Push klappt – deshalb erst versuchen zu pushen und das
+  // TATSÄCHLICHE Ergebnis (nicht nur die Absicht) in pushedToShopify
+  // festhalten, statt lokal fälschlich "gepusht" zu behaupten.
+  let shopifyPushSucceeded = false;
+  let shopifyError: string | null = null;
+  if (wantsShopifyPush && variant?.shopifyInventoryItemId && config?.locationId) {
+    try {
+      await adjustInventory(variant.shopifyInventoryItemId, config.locationId, input.quantity);
+      shopifyPushSucceeded = true;
+    } catch (e) {
+      shopifyError = (e as Error).message;
+    }
+  }
+
   // Nur EIN Datensatz pro Verkaufsereignis (MaxLagerSale) – keine zusätzlichen
   // MaxLagerMovement/-PackagingMovement-Einträge, sonst erscheint derselbe
   // Verkauf doppelt in der vereinheitlichten Bewegungen-Liste.
@@ -253,7 +277,7 @@ export async function recordMaxLagerSale(input: {
         note: input.note,
         date: input.date,
         createdBy: input.createdBy,
-        pushedToShopify: wantsShopifyPush,
+        pushedToShopify: shopifyPushSucceeded,
       },
     }),
     ...(variant
@@ -266,8 +290,10 @@ export async function recordMaxLagerSale(input: {
       : []),
   ]);
 
-  if (wantsShopifyPush && variant?.shopifyInventoryItemId && config?.locationId) {
-    await adjustInventory(variant.shopifyInventoryItemId, config.locationId, input.quantity);
+  if (shopifyError) {
+    throw new Error(
+      `Verkauf gebucht, aber Shopify-Bestand konnte nicht erhöht werden: ${shopifyError}. Bitte manuell in Shopify korrigieren.`,
+    );
   }
 }
 

@@ -139,7 +139,9 @@ export function DefectCaptureForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium">Defekt-Art (mehrere möglich)</label>
+        <label className="mb-1 block text-sm font-medium">
+          Defekt-Art (mehrere möglich) – mindestens eine Art oder eine Notiz unten ist Pflicht
+        </label>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
           {reasons.map((r) => (
             <label key={r.id} className="flex items-center gap-1.5 text-sm">

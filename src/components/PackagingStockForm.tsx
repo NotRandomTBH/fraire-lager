@@ -96,10 +96,11 @@ export function PackagingStockForm({
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Grund (optional)</label>
+          <label className="mb-1 block text-sm font-medium">Grund</label>
           <input
             type="text"
             name="note"
+            required
             placeholder="z.B. Inventur"
             className="w-full rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-2"
           />
