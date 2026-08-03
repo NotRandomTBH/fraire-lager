@@ -20,12 +20,14 @@ function downloadBase64Pdf(base64: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+const CATEGORY_ORDER = ["Warenausgang", "Unterhosen", "Verpackung", "Karton", "Maxims Lager"];
+
 const CATEGORY_BADGE: Record<string, string> = {
   Unterhosen: "bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300",
   Verpackung: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400",
   Karton: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400",
   "Maxims Lager": "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300",
-  Shopify: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400",
+  Warenausgang: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400",
 };
 
 function formatMovementDate(m: UnifiedMovement) {
@@ -37,8 +39,16 @@ export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) 
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
-  const exitIds = movements.filter((m) => m.exitId).map((m) => m.exitId as string);
+  const availableCategories = CATEGORY_ORDER.filter((c) =>
+    movements.some((m) => m.category === c),
+  );
+  const filteredMovements = categoryFilter
+    ? movements.filter((m) => m.category === categoryFilter)
+    : movements;
+
+  const exitIds = filteredMovements.filter((m) => m.exitId).map((m) => m.exitId as string);
 
   function toggle(exitId: string) {
     setSelected((prev) => {
@@ -82,6 +92,34 @@ export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) 
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setCategoryFilter(null)}
+          className={`rounded-full px-3 py-1 text-xs font-medium ${
+            categoryFilter === null
+              ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+              : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
+          }`}
+        >
+          Alle
+        </button>
+        {availableCategories.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => setCategoryFilter(c)}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              categoryFilter === c
+                ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+                : (CATEGORY_BADGE[c] ?? "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400")
+            }`}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+
       {exitIds.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3">
           <label className="flex items-center gap-2 text-sm">
@@ -120,7 +158,7 @@ export function BewegungenList({ movements }: { movements: UnifiedMovement[] }) 
             </tr>
           </thead>
           <tbody>
-            {movements.map((m) => {
+            {filteredMovements.map((m) => {
               const isExpanded = expanded.has(m.id);
               return (
                 <Fragment key={m.id}>

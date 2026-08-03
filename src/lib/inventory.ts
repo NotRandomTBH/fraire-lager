@@ -762,7 +762,7 @@ const MOVEMENT_TYPE_LABEL: Record<string, string> = {
 
 const PACKAGING_TYPE_LABEL: Record<string, string> = {
   RECEIVE: "Wareneingang",
-  USED: "Verpackt (verbraucht)",
+  USED: "Verbraucht (beim Verpacken)",
   EXIT: "Austrag",
   ADJUST: "Korrektur",
   TRANSFER_OUT: "Übernahme (Maxims Lager)",
@@ -784,7 +784,7 @@ export type UnifiedMovement = {
   id: string;
   date: Date;
   dateOnly: boolean; // true = date trägt keine echte Uhrzeit (frei gewähltes Datum, z.B. Austrag), keine Uhrzeit anzeigen
-  category: "Unterhosen" | "Verpackung" | "Karton" | "Maxims Lager" | "Shopify";
+  category: "Unterhosen" | "Verpackung" | "Karton" | "Maxims Lager" | "Warenausgang";
   typeLabel: string;
   quantityDelta: number;
   details: string;
@@ -843,14 +843,7 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
       id: `exit-${e.id}`,
       date: e.date,
       dateOnly: true,
-      category:
-        e.itemType === "VERPACKUNGSMATERIAL"
-          ? "Verpackung"
-          : e.itemType === "KARTON"
-            ? "Karton"
-            : e.itemType === "SHOPIFY"
-              ? "Shopify"
-              : "Unterhosen",
+      category: "Warenausgang",
       typeLabel: "Austrag",
       quantityDelta: -e.quantity,
       details: `${label} · ${e.reason}${e.recipient ? ` · ${e.recipient}` : ""}`,
@@ -861,6 +854,10 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
   }
 
   for (const p of packagingMovements) {
+    const details =
+      p.type === "USED" && p.note
+        ? `${p.packSize}er-Verpackung – ${p.note.replace(/^Verpackt: /, "")}`
+        : `${p.packSize}er${p.note ? `: ${p.note}` : ""}`;
     unified.push({
       id: `packaging-${p.id}`,
       date: p.createdAt,
@@ -868,7 +865,7 @@ export async function listAllMovements(limit = 150): Promise<UnifiedMovement[]> 
       category: "Verpackung",
       typeLabel: PACKAGING_TYPE_LABEL[p.type] ?? p.type,
       quantityDelta: p.quantityDelta,
-      details: `${p.packSize}er${p.note ? `: ${p.note}` : ""}`,
+      details,
       createdBy: p.createdBy,
     });
   }
