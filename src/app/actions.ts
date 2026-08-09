@@ -50,10 +50,32 @@ import {
 
 export type ActionState = { ok: boolean; message: string };
 
+// Eigene Fehlerklasse statt eines generischen Error, damit toActionState()
+// diesen Fall zuverlässig erkennen kann (nicht nur an der Nachricht).
+class AuthRequiredError extends Error {
+  constructor() {
+    super("Nicht angemeldet.");
+    this.name = "AuthRequiredError";
+  }
+}
+
 async function requireUser() {
   const user = await getCurrentUser();
-  if (!user) throw new Error("Nicht angemeldet.");
+  if (!user) throw new AuthRequiredError();
   return user;
+}
+
+// Zentrale Fehlerbehandlung für alle Actions: Ist die Session abgelaufen oder
+// ungültig geworden (z.B. ein lange offener Tab), leitet das direkt zur
+// Login-Seite um, statt nur eine Fehlermeldung neben einer veralteten
+// "angemeldet"-Ansicht anzuzeigen – das hat zuvor verwirrend gewirkt, weil
+// die Kopfzeile noch den Namen zeigte, obwohl die Session serverseitig schon
+// weg war.
+function toActionState(e: unknown): ActionState {
+  if (e instanceof AuthRequiredError) {
+    redirect("/login");
+  }
+  return { ok: false, message: (e as Error).message };
 }
 
 export async function receiveStockAction(
@@ -80,7 +102,7 @@ export async function receiveStockAction(
     revalidatePath("/bewegungen");
     return { ok: true, message: "Wareneingang gebucht." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -129,7 +151,7 @@ export async function recordDefectAction(
     revalidatePath("/defekte");
     return { ok: true, message: "Defekt erfasst." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -153,7 +175,7 @@ export async function addDefectPhotosAction(
     revalidatePath("/defekte");
     return { ok: true, message: "Foto(s) hinzugefügt." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -171,7 +193,7 @@ export async function addDefectNoteAction(
     revalidatePath("/defekte");
     return { ok: true, message: "Bemerkung hinzugefügt." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -192,7 +214,7 @@ export async function editDefectReportAction(
     revalidatePath("/defekte");
     return { ok: true, message: "Änderung gespeichert." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -283,7 +305,7 @@ export async function recordStockExitAction(
       message: items.length === 1 ? "Austrag gebucht." : `${items.length} Austräge gebucht.`,
     };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -301,7 +323,7 @@ export async function addStockExitNoteAction(
     revalidatePath("/bewegungen");
     return { ok: true, message: "Notiz hinzugefügt." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -350,7 +372,7 @@ export async function packStockAction(
     revalidatePath("/wareneingang/verpackung");
     return { ok: true, message: "Verpackt und Lager aktualisiert." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -371,7 +393,7 @@ export async function receivePackagingStockAction(
     revalidatePath("/");
     return { ok: true, message: "Verpackungsmaterial gebucht." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -392,7 +414,7 @@ export async function adjustPackagingStockAction(
     revalidatePath("/verpacken");
     return { ok: true, message: "Korrektur gebucht." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -411,7 +433,7 @@ export async function receiveCartonStockAction(
     revalidatePath("/");
     return { ok: true, message: "Kartons gebucht." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -430,7 +452,7 @@ export async function adjustCartonStockAction(
     revalidatePath("/");
     return { ok: true, message: "Korrektur gebucht." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -454,7 +476,7 @@ export async function updateReorderSettingsAction(
     revalidatePath("/einstellungen");
     return { ok: true, message: "Bestellpunkt-Parameter gespeichert." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -474,7 +496,7 @@ export async function adjustStockAction(
     revalidatePath("/bewegungen");
     return { ok: true, message: "Korrektur gebucht." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -504,7 +526,7 @@ export async function changePasswordAction(
 
     return { ok: true, message: "Passwort geändert." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -521,7 +543,7 @@ export async function updateThresholdAction(
     revalidatePath("/einstellungen");
     return { ok: true, message: "Schwellenwert gespeichert." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -554,7 +576,7 @@ export async function linkShopifyVariantAction(
     revalidatePath("/einstellungen");
     return { ok: true, message: `Verknüpft mit "${found.product.title} – ${found.title}".` };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -580,7 +602,7 @@ export async function correctShopifyStockAction(
       message: `${result.sizeLabel} ${result.packSize}er: ${result.previous} → ${result.newQuantity} korrigiert.`,
     };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -598,7 +620,7 @@ export async function saveLocationAction(
     revalidatePath("/einstellungen");
     return { ok: true, message: "Standort gespeichert." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -620,7 +642,7 @@ export async function syncShopifyAction(
     revalidatePath("/analytics");
     return { ok: true, message: `Sync abgeschlossen (${count} Tages-Einträge aktualisiert).` };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -641,7 +663,7 @@ export async function transferLooseToMaxLagerAction(
     revalidatePath("/");
     return { ok: true, message: "Übernommen." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -662,7 +684,7 @@ export async function transferPackagingToMaxLagerAction(
     revalidatePath("/");
     return { ok: true, message: "Übernommen." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -682,7 +704,7 @@ export async function adjustMaxLagerStockAction(
     revalidatePath("/bewegungen");
     return { ok: true, message: "Korrektur gebucht." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -702,7 +724,7 @@ export async function adjustMaxLagerPackagingStockAction(
     revalidatePath("/bewegungen");
     return { ok: true, message: "Korrektur gebucht." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
 
@@ -727,6 +749,6 @@ export async function recordMaxLagerSaleAction(
     revalidatePath("/");
     return { ok: true, message: "Verkauf gebucht." };
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return toActionState(e);
   }
 }
