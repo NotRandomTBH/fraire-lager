@@ -24,5 +24,8 @@ export async function loginAction(
   }
 
   await createSession(user.id);
-  redirect("/");
+
+  const returnTo = String(formData.get("returnTo") ?? "");
+  const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/";
+  redirect(safeReturnTo);
 }

@@ -6,11 +6,12 @@ import { SubmitButton } from "@/components/SubmitButton";
 
 const initialState: LoginState = { error: null };
 
-export function LoginForm({ names }: { names: string[] }) {
+export function LoginForm({ names, returnTo }: { names: string[]; returnTo?: string }) {
   const [state, formAction] = useActionState(loginAction, initialState);
 
   return (
     <form action={formAction} className="space-y-4">
+      {returnTo && returnTo !== "/" && <input type="hidden" name="returnTo" value={returnTo} />}
       <div>
         <label className="mb-1 block text-sm font-medium">Name</label>
         <select

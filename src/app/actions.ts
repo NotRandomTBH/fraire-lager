@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import {
   destroySession,
@@ -71,9 +72,24 @@ async function requireUser() {
 // "angemeldet"-Ansicht anzuzeigen – das hat zuvor verwirrend gewirkt, weil
 // die Kopfzeile noch den Namen zeigte, obwohl die Session serverseitig schon
 // weg war.
-function toActionState(e: unknown): ActionState {
+async function toActionState(e: unknown): Promise<ActionState> {
   if (e instanceof AuthRequiredError) {
-    redirect("/login");
+    // Aktuelle Seite als returnTo mitgeben, damit man nach dem erneuten
+    // Anmelden nicht auf dem Dashboard landet, sondern genau dort weitermachen
+    // kann, wo man war (z.B. mitten in einem Warenausgang).
+    const referer = (await headers()).get("referer");
+    let returnTo = "/";
+    if (referer) {
+      try {
+        const url = new URL(referer);
+        if (url.pathname && url.pathname !== "/login") {
+          returnTo = url.pathname + url.search;
+        }
+      } catch {
+        // ungültiger Referer, bei "/" bleiben
+      }
+    }
+    redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`);
   }
   return { ok: false, message: (e as Error).message };
 }

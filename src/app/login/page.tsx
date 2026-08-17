@@ -5,9 +5,20 @@ import { LoginForm } from "@/components/LoginForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+// returnTo: wohin nach dem Anmelden weitergeleitet wird (z.B. wenn eine
+// abgelaufene Sitzung mitten in einer Buchung hierher umgeleitet hat), damit
+// man nicht jedes Mal neu zur richtigen Seite navigieren und Eingaben
+// wiederholen muss.
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ returnTo?: string }>;
+}) {
+  const { returnTo } = await searchParams;
+  const safeReturnTo = returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/";
+
   const user = await getCurrentUser();
-  if (user) redirect("/");
+  if (user) redirect(safeReturnTo);
 
   const users = await prisma.user.findMany({
     orderBy: { name: "asc" },
@@ -21,7 +32,7 @@ export default async function LoginPage() {
           <h1 className="text-xl font-semibold">Lagerverwaltung</h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">Bitte anmelden</p>
         </div>
-        <LoginForm names={users.map((u) => u.name)} />
+        <LoginForm names={users.map((u) => u.name)} returnTo={safeReturnTo} />
       </div>
     </div>
   );
